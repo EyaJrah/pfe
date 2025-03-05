@@ -1,0 +1,36 @@
+<div class="parent">
+  <div class="container">
+    <!-- Logo and App Name -->
+    <div class="logo-and-title">
+      <div class="logo">
+        <img src="assets/images/SecCheck.png" alt="SecCheck Logo">
+      </div>
+      <h1>CheckSec</h1>
+    </div>
+
+    <!-- Subtitle -->
+    <p>Your Security Companion</p>
+
+    <!-- Login Form -->
+    <div class="login-box">
+      <h2>Login</h2>
+      <form [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+        <div class="input-box">
+          <input type="email" formControlName="email" required autocomplete="username">
+          <label>Email</label>
+        </div>
+        <div class="input-box">
+          <input type="password" formControlName="password" required autocomplete="current-password">
+          <label>Password</label>
+        </div>
+        <div class="forgot-pass">
+          <a href="#">Forgot your password?</a>
+        </div>
+        <button type="submit" class="btn" [disabled]="loginForm.invalid">Login</button>
+        <div class="signup-link">
+          <button type="button" (click)="goToSignUp()" class="btn">Sign Up</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

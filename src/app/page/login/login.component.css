@@ -1,0 +1,161 @@
+/* General styles */
+body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background: #1f293a;
+    color: #fff;
+}
+
+.parent {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #1f293a;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Container for the login form */
+.container {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column; /* Stack children vertically */
+    align-items: center; /* Center children horizontally */
+    position: relative;
+    padding: 20px;
+}
+
+/* Logo and App Name Section */
+.logo-and-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px; /* Reduced margin to bring logo/name closer to form */
+}
+
+.logo img {
+    width: 30px; /* Smaller logo size */
+    height: auto;
+}
+
+.logo-and-title h1 {
+    font-size: 3rem;  /* Increased app name size */
+    color: #00bfae; /* Teal/green color for the app name */
+    margin: 0;
+    font-weight: bold;
+}
+
+/* Subtitle */
+p {
+    font-size: 1.2rem;
+    color: #cccccc;
+    text-align: center;
+    margin-top: 5px; /* Reduced margin for subtitle */
+    font-weight: 300;
+}
+
+/* Login Box */
+.login-box {
+    width: 100%;
+    margin-top: 20px; /* Add space between logo/title and form */
+}
+
+/* Input styles */
+.input-box {
+    position: relative;
+    margin: 20px 0;
+}
+
+.input-box input {
+    width: 100%;
+    height: 50px;
+    background: transparent;
+    border: 2px solid #2c4766;
+    outline: none;
+    border-radius: 40px;
+    font-size: 1.1em;
+    color: #fff;
+    padding: 0 20px;
+    transition: .3s ease;
+}
+.login-box h2 {
+    color: #fff; /* White color */
+}
+.input-box input:focus,
+.input-box input:valid {
+    border-color: #0ef;
+}
+
+.input-box label {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    font-size: 1.1em;
+    color: #fff;
+    pointer-events: none;
+    transition: .3s ease;
+}
+
+.input-box input:focus~label,
+.input-box input:valid~label {
+    top: -10px;
+    font-size: 1em;
+    background: #1f293a;
+    padding: 0 6px;
+    color: #0ef;
+}
+
+/* Forgot password link */
+.forgot-pass {
+    margin: -10px 0 20px;
+}
+
+.forgot-pass a {
+    font-size: 1em;
+    color: #fff;
+    text-decoration: none;
+    transition: .3s;
+}
+
+.forgot-pass a:hover {
+    color: #0ef;
+}
+
+/* Button styling */
+.btn {
+    width: 100%;
+    height: 50px;
+    background: #0ef;
+    border: none;
+    outline: none;
+    border-radius: 40px;
+    cursor: pointer;
+    font-size: 1.1em;
+    color: #1f293a;
+    font-weight: 600;
+    transition: .3s;
+}
+
+.btn:hover {
+    background: #0096c7;
+}
+
+.signup-link {
+    margin: 20px 0 10px;
+}
+
+.signup-link a {
+    font-size: 1.2em;
+    color: #0ef;
+    text-decoration: none;
+    font-weight: 600;
+    transition: .3s;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,75 @@
+<header class="dashboard-header">
+    <!-- Logo and App Name -->
+    <button (click)="logout()" class="logout-button">
+      Logout
+      <img src="assets/images/logout.png" alt="Logout" width="30" height="30">
+  </button>
+  
+    <div class="logo-and-title">
+
+      <div class="logo">
+        <img src="assets/images/SecCheck.png" alt="SecCheck Logo">
+      </div>
+      <h1>CheckSec</h1>
+    </div>
+    <!-- Subtitle -->
+    <p>Your Security Companion</p>
+  
+    <!-- Menu -->
+    <nav class="main-menu">
+      <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Scans</a></li>
+        <li><a href="#">Reports</a></li>
+        <li><a href="#">Settings</a></li>
+        <li><a href="#">Features</a></li>
+        <li><a href="#">Screeshots</a></li>
+        <li><a href="#">About us</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>🔍 Security Scanner</h1>
+        <p>Real-time Security Monitoring & Threat Detection</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card stats-card">
+            <img src="assets/images/scanner.png" alt="Scan Icon">
+            <h2>Total Scans</h2>
+            <p>256</p>
+        </div>
+        <div class="card alert-card">
+            <img src="assets/images/threat.png" alt="Threat Icon">
+            <h2>Threats Detected</h2>
+            <p>5</p>
+        </div>
+        <div class="card safe-card">
+            <img src="assets/images/secure.png" alt="Secure Icon">
+            <h2>System Status</h2>
+            <p>✅ Secure</p>
+        </div>
+    </div>
+
+    <div class="scanner-section">
+        <h2>Scanner Status</h2>
+        <div class="scanner-box">
+            <p>Last Scan: <strong>2 minutes ago</strong></p>
+            <input type="text" id="scanInput" placeholder="Enter scan code..." class="scan-input">
+            <br>
+            <br>
+            <button class="scan-button">🔄 Start New Scan</button>
+        </div>
+    </div>
+
+    <div class="activity-section">
+        <h2>Recent Activity</h2>
+        <ul class="activity-log">
+            <li class="success">✔ Scan completed - No threats found</li>
+            <li class="warning">⚠ Threat detected - File: suspicious.exe</li>
+            <li class="success">✔ Threat neutralized - File: trojan.dll</li>
+        </ul>
+    </div>
+</div>
