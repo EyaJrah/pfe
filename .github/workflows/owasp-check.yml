@@ -25,17 +25,16 @@ jobs:
         run: npm install
 
       - name: Run OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
+        uses: docker://owasp/dependency-check:7.4.4
         with:
-          project: 'CheckSec'
-          path: '.'
-          format: 'HTML'
-          out: 'reports'
           args: >
-            --suppression suppression.xml
+            --project "CheckSec"
+            --scan .
+            --format "HTML"
+            --out "reports"
             --failOnCVSS 7
             --enableRetired
-            --scan .
+            --suppression suppression.xml
 
       - name: Upload OWASP report
         uses: actions/upload-artifact@v3
