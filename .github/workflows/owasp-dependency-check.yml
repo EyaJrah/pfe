@@ -35,6 +35,7 @@ jobs:
             --suppression suppression.xml
             --failOnCVSS 7
             --enableRetired
+            --scan .
 
       - name: Upload OWASP report
         uses: actions/upload-artifact@v3
