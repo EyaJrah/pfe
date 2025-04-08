@@ -22,14 +22,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run OWASP Dependency Check
-        uses: jeremylong/DependencyCheck@v6
-        with:
-          project: 'CheckSec'
-          path: '.'
-          format: 'HTML'
-          out: 'reports'
-          args: '--failOnCVSS 7 --enableRetired --scan . --prettyPrint'
+      - name: Run OWASP Dependency Check using Docker
+        run: |
+          mkdir -p reports
+          docker run --rm \
+            -v $(pwd):/src \
+            -v $(pwd)/reports:/report \
+            owasp/dependency-check \
+            --project "CheckSec" \
+            --scan /src \
+            --format HTML \
+            --out /report \
+            --failOnCVSS 7 \
+            --enableRetired \
+            --prettyPrint
 
       - name: List report files
         run: ls -R reports
