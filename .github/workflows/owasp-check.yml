@@ -9,6 +9,7 @@ on:
 jobs:
   dependency-check:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,26 +23,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run OWASP Dependency Check using Docker
-        run: |
-          mkdir -p reports
-          docker run --rm \
-            -v ${{ github.workspace }}:/src \
-            -v ${{ github.workspace }}/reports:/report \
-            owasp/dependency-check \
-            --project "CheckSec" \
-            --scan /src \
-            --format HTML \
-            --out /report \
-            --failOnCVSS 7 \
-            --enableRetired \
-            --prettyPrint
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'CheckSec'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          failOnCVSS: '7'
+          enableRetired: true
 
-      - name: Show Dependency Check logs
-        run: cat reports/dependency-check-report.html || echo "No report found"
+      - name: List generated reports
+        run: ls -R reports
 
       - name: Upload OWASP report
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
           path: reports/
+          retention-days: 30
