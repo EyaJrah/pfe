@@ -26,8 +26,8 @@ jobs:
         run: |
           mkdir -p reports
           docker run --rm \
-            -v $(pwd):/src \
-            -v $(pwd)/reports:/report \
+            -v ${{ github.workspace }}:/src \
+            -v ${{ github.workspace }}/reports:/report \
             owasp/dependency-check \
             --project "CheckSec" \
             --scan /src \
@@ -37,12 +37,11 @@ jobs:
             --enableRetired \
             --prettyPrint
 
-      - name: List report files
-        run: ls -R reports
+      - name: Show Dependency Check logs
+        run: cat reports/dependency-check-report.html || echo "No report found"
 
       - name: Upload OWASP report
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
           path: reports/
-          retention-days: 30
