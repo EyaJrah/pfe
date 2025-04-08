@@ -29,7 +29,7 @@ jobs:
           path: '.'
           format: 'HTML'
           out: 'reports'
-          args: '--failOnCVSS 7 --enableRetired --scan --prettyPrint'
+          args: '--project CheckSec --scan . --format HTML --out reports --failOnCVSS 7 --enableRetired --prettyPrint'
 
       - name: Upload OWASP report
         uses: actions/upload-artifact@v4
