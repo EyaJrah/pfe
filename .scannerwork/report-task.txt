@@ -1,0 +1,7 @@
+organization=eyajrah
+projectKey=EyaJrah_pfe
+serverUrl=https://sonarcloud.io
+serverVersion=8.0.0.61760
+dashboardUrl=https://sonarcloud.io/dashboard?id=EyaJrah_pfe
+ceTaskId=AZYfGOpCmhen8CA8tRHr
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZYfGOpCmhen8CA8tRHr
