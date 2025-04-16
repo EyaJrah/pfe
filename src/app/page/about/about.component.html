@@ -1,0 +1,62 @@
+<header class="dashboard-header">
+    <!-- Logo and App Name -->
+    <button (click)="logout()" class="logout-button">
+      <i class="fas fa-sign-out-alt"></i> Logout
+      <img src="assets/images/logout.png" alt="Logout" width="30" height="30">
+    </button>
+  
+    <div class="logo-and-title">
+      <div class="logo">
+        <img src="assets/images/SecCheck.png" alt="SecCheck Logo">
+      </div>
+      <div class="title">
+        <h1>CheckSec</h1>
+        <p>Your Security Companion</p>
+      </div>
+    </div>
+   
+  
+    <!-- Menu -->
+    <nav class="main-menu">
+      <ul>
+        <li><a routerLink="/dashbord">Accueil</a></li>
+        <li><a routerLink="/about" class="active">A propos</a></li>
+        <li><a routerLink="/contact">Nous contacter</a></li>
+      </ul>
+    </nav>
+</header>
+
+<div class="about-container">
+    <div class="about-section">
+        <h1>A propos CheckSec</h1>
+        <p class="subtitle">La puissance de la sécurité, en toute simplicité</p>
+        
+        <div class="mission-section">
+            <h2>Notre Mission</h2>
+            <p>CheckSec s’engage à offrir des solutions puissantes d’analyse de sécurité pour les dépôts GitHub. Notre mission est d’aider les développeurs à identifier et corriger les vulnérabilités de sécurité dans leur code avant qu’elles ne deviennent de véritables menaces.</p>
+        </div>
+
+        <div class="features-section">
+            <h2>Ce que nous vous offrons</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>Analyse complète, sérénité assurée</h3>
+                    <p>Exploitez une multitude d’outils de sécurité de pointe, tels que SonarQube, Trivy, Snyk et OWASP Dependency Check, pour une analyse complète et fiable de la sécurité..</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Analyse en temps réel </h3>
+                    <p>Obtenez des retours instantanés sur le statut de sécurité de votre dépôt avec nos capacités de scan en temps réel.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Rapports détaillés</h3>
+                    <p>Recevez des rapports complets avec des insights et des recommandations pour corriger les vulnérabilités identifiées.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="team-section">
+            <h2>Notre équipe</h2>
+            <p>CheckSec est développé par une équipe de spécialistes en sécurité et ingénieurs logiciels passionnés par la sécurité du code.</p>
+        </div>
+    </div>
+</div> 

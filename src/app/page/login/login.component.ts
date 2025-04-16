@@ -3,16 +3,28 @@ import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ApiService } from '../../api.service';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+
+interface LoginResponse {
+  token: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule], // ✅ Add ReactiveFormsModule here
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
   loginForm: FormGroup;
+  errorMessage: string = '';
+  isLoading: boolean = false;
 
   constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService) {
     this.loginForm = this.fb.group({
@@ -21,32 +33,77 @@ export class LoginComponent {
     });
   }
 
-  async submitLogin() {
+  submitLogin() {
+    this.errorMessage = '';
+    
     if (this.loginForm.invalid) {
-      alert("Please enter a valid email and password.");
+      if (this.loginForm.get('email')?.errors?.['required']) {
+        this.errorMessage = 'Email is required';
+      } else if (this.loginForm.get('email')?.errors?.['email']) {
+        this.errorMessage = 'Please enter a valid email';
+      } else if (this.loginForm.get('password')?.errors?.['required']) {
+        this.errorMessage = 'Password is required';
+      } else if (this.loginForm.get('password')?.errors?.['minlength']) {
+        this.errorMessage = 'Password must be at least 6 characters';
+      }
       return;
     }
 
     const { email, password } = this.loginForm.value;
-    console.log('🔹 Submit Login:', { email, password });
+    console.log('Attempting login with:', { email });
+    
+    this.isLoading = true;
 
-    try {
-      const response = await this.apiService.login(email, password).toPromise();
-      console.log('🔹 Response:', response);
+    this.apiService.login(email, password).subscribe({
+      next: (response: LoginResponse) => {
+        console.log('Login successful, response:', response);
 
-      if (response?.token) {
-        localStorage.setItem('token', response.token);
-        this.router.navigate(['/dashbord']);
-      } else {
-        alert('Invalid credentials or server error.');
+        if (response?.token) {
+          // Store the token securely
+          localStorage.setItem('auth_token', response.token);
+          console.log('Token stored in localStorage');
+          
+          // Store user info if available
+          if (response.user) {
+            localStorage.setItem('user_info', JSON.stringify(response.user));
+            console.log('User info stored in localStorage');
+          }
+
+          // Navigate to dashboard - corrected path to match the route configuration
+          console.log('Navigating to dashboard...');
+          this.router.navigate(['/dashbord']).then(
+            success => console.log('Navigation successful:', success),
+            error => console.error('Navigation failed:', error)
+          );
+        } else {
+          console.error('No token in response');
+          this.errorMessage = 'Invalid response from server';
+        }
+        this.isLoading = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Login error:', error);
+        
+        // Handle specific error responses from our backend
+        if (error.error?.message) {
+          this.errorMessage = error.error.message;
+        } else if (error.status === 400) {
+          this.errorMessage = 'Invalid email or password';
+        } else if (error.status === 401) {
+          this.errorMessage = 'Unauthorized access';
+        } else if (error.status === 404) {
+          this.errorMessage = 'User not found';
+        } else if (error.status === 0) {
+          this.errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+        } else {
+          this.errorMessage = 'An error occurred. Please try again later.';
+        }
+        this.isLoading = false;
       }
-    } catch (error: any) {
-      console.error('❌ Login Error:', error);
-      alert(error.status === 401 ? 'Invalid email or password.' : 'An error occurred. Try again later.');
-    }
+    });
   }
 
   goToSignUp() {
-    this.router.navigate(['/signup']);
+    this.router.navigate(['/sign-up']);
   }
 }

@@ -1,14 +1,25 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http'; // Import HttpClient
+import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+
+interface SignupResponse {
+  message: string;
+  token: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
 
 @Component({
   selector: 'app-sign-up',
   templateUrl: './sign-up.component.html',
   styleUrls: ['./sign-up.component.css'],
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, HttpClientModule, CommonModule],
 })
 export class SignUpComponent {
   firstName: string = '';
@@ -16,15 +27,19 @@ export class SignUpComponent {
   email: string = '';
   password: string = '';
   confirmPassword: string = '';
+  errorMessage: string = '';
+  isLoading: boolean = false;
 
-  constructor(private router: Router, private http: HttpClient) {} // Inject HttpClient
-
+  constructor(private router: Router, private http: HttpClient) {}
 
   submitSignUp() {
     if (this.password !== this.confirmPassword) {
-      alert('Passwords do not match!');
+      this.errorMessage = 'Les mots de passe ne correspondent pas!';
       return;
     }
+
+    this.isLoading = true;
+    this.errorMessage = '';
 
     const userData = {
       name: `${this.firstName} ${this.lastName}`,
@@ -32,17 +47,19 @@ export class SignUpComponent {
       password: this.password,
     };
 
-    this.http.post('http://localhost:5000/api/auth/signup', userData)
-      .subscribe(
-        (response) => {
-          console.log('User registered:', response);
-          this.router.navigate(['/dashboard']);
+    this.http.post<SignupResponse>('http://localhost:5000/api/auth/signup', userData)
+      .subscribe({
+        next: (response: SignupResponse) => {
+          console.log('Utilisateur enregistré:', response);
+          this.isLoading = false;
+          this.router.navigate(['/dashbord']);
         },
-        (error) => {
-          console.error('Error during sign up:', error);
-          alert('Error during sign-up. Please try again.');
+        error: (error: HttpErrorResponse) => {
+          console.error('Erreur lors de l\'inscription:', error);
+          this.isLoading = false;
+          this.errorMessage = error.error?.message || 'Erreur lors de l\'inscription. Veuillez réessayer.';
         }
-      );
+      });
   }
 
   goToLogin() {

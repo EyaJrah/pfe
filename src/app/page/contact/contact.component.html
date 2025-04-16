@@ -1,0 +1,112 @@
+<header class="dashboard-header">
+    <!-- Logo and App Name -->
+    <button (click)="logout()" class="logout-button">
+      <i class="fas fa-sign-out-alt"></i> Logout
+      <img src="assets/images/logout.png" alt="Logout" width="30" height="30">
+    </button>
+  
+    <div class="logo-and-title">
+      <div class="logo">
+        <img src="assets/images/SecCheck.png" alt="SecCheck Logo">
+      </div>
+      <div class="title">
+        <h1>CheckSec</h1>
+        <p>Your Security Companion</p>
+      </div>
+    </div>
+   
+    <!-- Menu -->
+    <nav class="main-menu">
+      <ul>
+        <li><a routerLink="/dashbord">Accueil</a></li>
+        <li><a routerLink="/about">A propos</a></li>
+        <li><a routerLink="/contact" class="active">Nous contacter</a></li>
+      </ul>
+    </nav>
+</header>
+
+<div class="contact-info">
+    <h2 class="centered-message">Nous sommes à votre écoute – contactez-nous dès aujourd'hui !<3</h2>
+</div>
+
+<div class="contact-container">
+    <div class="contact-section">
+        <div class="contact-info">
+            <div class="info-card">
+                <i class="fas fa-map-marker-alt"></i>
+                <h3>Addresse</h3>
+                <p> immeuble Errachid, Av. du combattant suprême, Monastir 5000</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-envelope"></i>
+                <h3>Email</h3>
+                <p>www.mobelite.fr</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-phone"></i>
+                <h3>Télèphone</h3>
+                <p>31 313 737</p>
+            </div>
+        </div>
+        
+        <div class="contact-form-container">
+            <h2>Envoyez-nous un message</h2>
+            
+            <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="contact-form">
+                <div class="form-group">
+                    <label for="name">Nom</label>
+                    <input type="text" id="name" formControlName="name" placeholder="Votre nom">
+                    <div class="error-message" *ngIf="contactForm.get('name')?.invalid && contactForm.get('name')?.touched">
+                        <span *ngIf="contactForm.get('name')?.errors?.['required']">Le nom est indispensable pour poursuivre.</span>
+                        <span *ngIf="contactForm.get('name')?.errors?.['minlength']">Le nom doit comporter au moins 3 caractères.</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" formControlName="email" placeholder="Votre email">
+                    <div class="error-message" *ngIf="contactForm.get('email')?.invalid && contactForm.get('email')?.touched">
+                        <span *ngIf="contactForm.get('email')?.errors?.['required']">L'email est indispensable pour poursuivre</span>
+                        <span *ngIf="contactForm.get('email')?.errors?.['email']">SVP,entrez votre email</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="subject">Objet de la discussion</label>
+                    <input type="text" id="subject" formControlName="subject" placeholder="Objet de la discussion">
+                    <div class="error-message" *ngIf="contactForm.get('subject')?.invalid && contactForm.get('subject')?.touched">
+                        <span *ngIf="contactForm.get('subject')?.errors?.['required']">L'objet de la discussion est indispensable pour poursuivre</span>
+                        <span *ngIf="contactForm.get('subject')?.errors?.['minlength']">L'objet de la discussion doit comporter au moins 5 caractères</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" formControlName="message" rows="5" placeholder="Votre message"></textarea>
+                    <div class="error-message" *ngIf="contactForm.get('message')?.invalid && contactForm.get('message')?.touched">
+                        <span *ngIf="contactForm.get('message')?.errors?.['required']">Le message est indispensable pour poursuivre</span>
+                        <span *ngIf="contactForm.get('message')?.errors?.['minlength']">Le message doit comporter au moins 20 caractères    </span>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" [disabled]="isSubmitting || contactForm.invalid" class="submit-button">
+                        <span *ngIf="!isSubmitting">Envoyer un message</span>
+                        <span *ngIf="isSubmitting">Envoi en cours...</span>
+                    </button>
+                </div>
+                
+                <div class="form-messages">
+                    <div class="success-message" *ngIf="submitSuccess">
+                        <i class="fas fa-check-circle"></i>
+                        <p>Votre message a été envoyé avec succès !</p>
+                    </div>
+                    <div class="error-message" *ngIf="submitError">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Une erreur est survenue lors de l'envoi de votre message. Veuillez réessayer plus tard.</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 
