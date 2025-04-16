@@ -1,15 +1,33 @@
 /* src/app/app.component.css */
-/* src/app/app.component.css */
 .logo-container {
-    position: absolute; /* Position absolue pour placer le logo où vous voulez */
-    top: 10px; /* Distance depuis le haut */
-    left: 10px; /* Distance depuis la gauche */
-    background: transparent; /* Pas d'arrière-plan */
-    z-index: 1000; /* Assure que le logo est au-dessus des autres éléments */
+    position: fixed; /* Position fixe pour rester visible lors du défilement */
+    top: 20px; /* Distance depuis le haut */
+    left: 20px; /* Distance depuis la gauche */
+    background: transparent;
+    z-index: 1000;
+    transition: all 0.3s ease;
 }
 
 .logo-container img {
-    width: 300px; /* Ajustez la taille du logo */
-    height: auto; /* Maintient les proportions */
-    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2)); /* Ombre légère (optionnel) */
+    width: 250px; /* Taille augmentée */
+    height: auto;
+    filter: brightness(0) invert(1); /* Rend l'image blanche */
+    transition: all 0.3s ease;
+}
+
+/* Style pour le logo bleu roi lors du défilement */
+.logo-container.scrolled img {
+    filter: brightness(0) saturate(100%) invert(13%) sepia(100%) saturate(6932%) hue-rotate(246deg) brightness(97%) contrast(101%); /* Bleu roi */
+}
+
+/* Media query pour les appareils mobiles */
+@media (max-width: 768px) {
+    .logo-container {
+        top: 10px;
+        left: 10px;
+    }
+    
+    .logo-container img {
+        width: 180px; /* Taille augmentée pour mobile */
+    }
 }

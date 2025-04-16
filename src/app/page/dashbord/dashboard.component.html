@@ -1,75 +1,93 @@
 <header class="dashboard-header">
     <!-- Logo and App Name -->
     <button (click)="logout()" class="logout-button">
-      Logout
+      <i class="fas fa-sign-out-alt"></i> Logout
       <img src="assets/images/logout.png" alt="Logout" width="30" height="30">
-  </button>
+    </button>
   
     <div class="logo-and-title">
-
       <div class="logo">
         <img src="assets/images/SecCheck.png" alt="SecCheck Logo">
       </div>
-      <h1>CheckSec</h1>
+      <div class="title">
+        <h1>CheckSec</h1>
+        <p>Your Security Companion</p>
+      </div>
     </div>
-    <!-- Subtitle -->
-    <p>Your Security Companion</p>
-  
+   
     <!-- Menu -->
     <nav class="main-menu">
       <ul>
-        <li><a href="#">Home</a></li>
-        <li><a href="#">Scans</a></li>
-        <li><a href="#">Reports</a></li>
-        <li><a href="#">Settings</a></li>
-        <li><a href="#">Features</a></li>
-        <li><a href="#">Screeshots</a></li>
-        <li><a href="#">About us</a></li>
-        <li><a href="#">Contact</a></li>
+        <li><a routerLink="/dashbord" class="active">Accueil</a></li>
+        <li><a routerLink="/about">A propos</a></li>
+        <li><a routerLink="/contact">Nous contacter</a></li>
       </ul>
     </nav>
-  </header>
-  <div class="dashboard-container">
+</header>
+
+<div class="dashboard-container" *ngIf="!isLoading; else loading">
+    <!-- User Info Section -->
+    <div class="user-info-section" *ngIf="userInfo">
+        <h2>Bienvenue, {{ userInfo.name }}!</h2>
+        <p>Email: {{ userInfo.email }}</p>
+    </div>
+
     <div class="dashboard-header">
-        <h1>🔍 Security Scanner</h1>
-        <p>Real-time Security Monitoring & Threat Detection</p>
+        <h1>🔍 Scanneur de sécurité</h1>
+        <p>Détection en temps réel de la sécurité et des menaces</p>
     </div>
 
     <div class="dashboard-grid">
         <div class="card stats-card">
             <img src="assets/images/scanner.png" alt="Scan Icon">
-            <h2>Total Scans</h2>
+            <h2>Nombre Total d'Analyses</h2>
             <p>256</p>
         </div>
         <div class="card alert-card">
             <img src="assets/images/threat.png" alt="Threat Icon">
-            <h2>Threats Detected</h2>
+            <h2>Menaces détectées</h2>
             <p>5</p>
         </div>
         <div class="card safe-card">
             <img src="assets/images/secure.png" alt="Secure Icon">
-            <h2>System Status</h2>
-            <p>✅ Secure</p>
+            <h2>Statut du Système</h2>
+            <p>✅ Sécurisé</p>
         </div>
     </div>
 
     <div class="scanner-section">
-        <h2>Scanner Status</h2>
+        <h2>Analyseur de dépôt GitHub</h2>
         <div class="scanner-box">
-            <p>Last Scan: <strong>2 minutes ago</strong></p>
-            <input type="text" id="scanInput" placeholder="Enter scan code..." class="scan-input">
-            <br>
-            <br>
-            <button class="scan-button">🔄 Start New Scan</button>
+            <p>Dernière Analyse: <strong>il y a 2 minutes</strong></p>
+            <form (ngSubmit)="startScan()">
+                <input type="text" id="githubInput" [(ngModel)]="githubUrl" name="githubUrl" placeholder="Entrez l'URL du dépôt GitHub (e.g., https://github.com/user/repo)" class="scan-input">
+                <br>
+                <br>
+                <button type="submit" class="scan-button" [disabled]="isLoading">
+                    <span *ngIf="!isLoading">🔍 Analyser le dépôt</span>
+                    <span *ngIf="isLoading">Analyse en cours...</span>
+                </button>
+            </form>
+            
+            <div class="error-message" *ngIf="errorMessage">
+                <p>{{ errorMessage }}</p>
+            </div>
         </div>
     </div>
 
     <div class="activity-section">
-        <h2>Recent Activity</h2>
+        <h2>Activité Récente</h2>
         <ul class="activity-log">
-            <li class="success">✔ Scan completed - No threats found</li>
-            <li class="warning">⚠ Threat detected - File: suspicious.exe</li>
-            <li class="success">✔ Threat neutralized - File: trojan.dll</li>
+            <li class="success">✔ Analyse terminée - Aucune menace détectée</li>
+            <li class="warning">⚠ Menace détectée - Fichier: suspicious.exe</li>
+            <li class="success">✔ Menace neutralisée - Fichier: trojan.dll</li>
         </ul>
     </div>
 </div>
+
+<ng-template #loading>
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Chargement du tableau de bord...</p>
+    </div>
+</ng-template>

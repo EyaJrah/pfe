@@ -1,7 +1,7 @@
 import {
   Title
-} from "./chunk-OBSVGI5E.js";
-import "./chunk-KEJFOMYF.js";
+} from "./chunk-NIO4G2ZZ.js";
+import "./chunk-2BDOYC3O.js";
 import {
   DOCUMENT,
   HashLocationStrategy,
@@ -10,7 +10,7 @@ import {
   LocationStrategy,
   PathLocationStrategy,
   ViewportScroller
-} from "./chunk-XZJNJXBX.js";
+} from "./chunk-STFN5IM6.js";
 import {
   APP_BOOTSTRAP_LISTENER,
   APP_INITIALIZER,
@@ -48,12 +48,10 @@ import {
   afterNextRender,
   booleanAttribute,
   createEnvironmentInjector,
-  defer,
   inject,
   input,
   isInjectable,
   isNgModule,
-  isObservable,
   isPromise,
   isStandalone,
   makeEnvironmentProviders,
@@ -80,7 +78,12 @@ import {
   ɵɵloadQuery,
   ɵɵqueryRefresh,
   ɵɵsanitizeUrlOrResourceUrl
-} from "./chunk-YZM22M2B.js";
+} from "./chunk-PD3AVYFZ.js";
+import {
+  defer,
+  isObservable
+} from "./chunk-LBBSG2YE.js";
+import "./chunk-WSXI74FV.js";
 import {
   BehaviorSubject,
   ConnectableObservable,
@@ -92,7 +95,7 @@ import {
   __spreadValues,
   catchError,
   combineLatest,
-  concat2 as concat,
+  concat,
   concatMap,
   defaultIfEmpty,
   filter,
@@ -114,7 +117,7 @@ import {
   takeUntil,
   tap,
   throwError
-} from "./chunk-XVP7PFHH.js";
+} from "./chunk-NGNUV6BG.js";
 
 // node_modules/@angular/router/fesm2022/router.mjs
 var PRIMARY_OUTLET = "primary";
@@ -1328,8 +1331,8 @@ function validateNode(route, fullPath, requireStandaloneComponents) {
 
       Example:
       const routes: Routes = [
-        { path: '', redirectTo: '/dashbord', pathMatch: 'full' },
-        { path: 'dashbord',  component: DashbordComponent },, << two commas
+        { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+        { path: 'dashboard',  component: DashboardComponent },, << two commas
         { path: 'detail/:id', component: HeroDetailComponent }
       ];
     `);
