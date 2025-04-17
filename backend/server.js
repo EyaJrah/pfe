@@ -8,7 +8,6 @@ const fs = require('fs');
 const path = require('path');
 
 const authRoutes = require('./routes/userRoutes');
-const scannerRoutes = require('./routes/scannerRoutes');
 
 dotenv.config();
 
@@ -74,7 +73,6 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/scanners', scannerRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
