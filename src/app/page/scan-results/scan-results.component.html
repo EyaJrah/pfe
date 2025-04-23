@@ -1,94 +1,82 @@
-<header class="dashboard-header">
-    <!-- Logo and App Name -->
-    <div class="logo-and-title">
-      <div class="logo">
-        <img src="assets/images/SecCheck.png" alt="SecCheck Logo">
-      </div>
-      <h1>CheckSec</h1>
-    </div>
-    <!-- Subtitle -->
-    <p>Your Security Companion</p>
-  
-    <!-- Menu -->
-    <nav class="main-menu">
-      <ul>
-        <li><a routerLink="/dashbord">Home</a></li>
-        <li><a routerLink="/about">About us</a></li>
-        <li><a routerLink="/contact">Contact Us</a></li>
-      </ul>
-    </nav>
-    
-    <!-- Logout Button -->
-    <button class="logout-button" (click)="logout()">
-      <i class="fas fa-sign-out-alt"></i> Logout
-      <img src="assets/images/logout.png" alt="Logout" class="logout-icon">
-    </button>
-</header>
-
-<div class="scan-info">
-    <h2>Scan Results</h2>
-    <p class="repo-url">Repository: {{ repositoryUrl }}</p>
-</div>
-
 <div class="results-container">
-    <div class="loading-spinner" *ngIf="isLoading">
-        <div class="spinner"></div>
-        <p>Analyzing repository...</p>
+  <header class="header">
+    <div class="center-content">
+      <div class="checksec-logo">
+        <img src="assets/images/SecCheck.png" alt="CheckSec Logo">
+        <h1>CheckSec</h1>
+      </div>
+      <p class="tagline">Your Security Companion</p>
+      <nav>
+        <a routerLink="/home">Home</a>
+        <a routerLink="/about">About us</a>
+        <a routerLink="/contact">Contact Us</a>
+      </nav>
+    </div>
+    <button (click)="logout()" class="logout-button">
+      <i class="fas fa-sign-out-alt"></i> Logout
+      <img src="assets/images/logout.png" alt="Logout" width="30" height="30">
+    </button>
+  </header>
+
+  <div class="content">
+    <div class="page-header">
+      <h1>Security Scan Results</h1>
+      <p class="repo-url">Repository: {{ repositoryUrl }}</p>
     </div>
 
-    <div class="error-message" *ngIf="errorMessage">
-        <p>{{ errorMessage }}</p>
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Analyzing repository...</p>
     </div>
 
-    <div class="results-content" *ngIf="!isLoading">
-        <div class="filters">
-            <select class="tool-filter" (change)="onToolChange($event)">
-                <option value="all">All Tools</option>
-                <option value="sonarqube">SonarQube</option>
-                <option value="trivy">Trivy</option>
-                <option value="snyk">Snyk</option>
-                <option value="owasp">OWASP Dependency Check</option>
-            </select>
-            <select class="severity-filter" (change)="onSeverityChange($event)">
-                <option value="all">All Severities</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-                <option value="info">Info</option>
-            </select>
-        </div>
-
-        <div class="results-summary" *ngIf="scanResults.length > 0">
-            <p>Found {{ filteredResults.length }} issues ({{ scanResults.length }} total)</p>
-        </div>
-
-        <table class="results-table" *ngIf="filteredResults.length > 0">
-            <thead>
-                <tr>
-                    <th>Tool</th>
-                    <th>Severity</th>
-                    <th>Description</th>
-                    <th>Location</th>
-                    <th>Recommendation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let result of filteredResults" [ngClass]="result.severity.toLowerCase()">
-                    <td>{{ result.tool }}</td>
-                    <td>
-                        <span class="severity-badge" [ngClass]="result.severity.toLowerCase()">
-                            {{ result.severity }}
-                        </span>
-                    </td>
-                    <td>{{ result.description }}</td>
-                    <td>{{ result.location }}</td>
-                    <td>{{ result.recommendation }}</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="no-results" *ngIf="filteredResults.length === 0 && !isLoading && !errorMessage">
-            <p>No issues found matching your filters.</p>
-        </div>
+    <!-- Error Message -->
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+      <button *ngIf="repositoryUrl" (click)="retryScans()" class="retry-button">
+        Retry Scan
+      </button>
     </div>
-</div> 
+
+    <!-- Results Content -->
+    <div *ngIf="!loading && !error" class="results-content">
+      <!-- SonarCloud Results -->
+      <section class="tool-section">
+        <h2>SonarCloud Analysis</h2>
+        <div class="json-container">
+          <pre>{{ scanResults.sonar | json }}</pre>
+        </div>
+      </section>
+
+      <!-- Snyk Results -->
+      <section class="tool-section">
+        <h2>Snyk Analysis</h2>
+        <div class="json-container">
+          <pre>{{ scanResults.snyk | json }}</pre>
+        </div>
+      </section>
+
+      <!-- Trivy Results -->
+      <section class="tool-section" *ngIf="scanResults.trivy.length > 0">
+        <h2>Trivy Scan Results</h2>
+        <div class="json-container">
+          <pre>{{ scanResults.trivy | json }}</pre>
+        </div>
+      </section>
+
+      <!-- OWASP Results -->
+      <section class="tool-section" *ngIf="scanResults.owasp.length > 0">
+        <h2>OWASP Analysis</h2>
+        <div class="json-container">
+          <pre>{{ scanResults.owasp | json }}</pre>
+        </div>
+      </section>
+    </div>
+
+    <!-- Back Button -->
+    <button class="back-button" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i>
+      Back to Dashboard
+    </button>
+  </div>
+</div>

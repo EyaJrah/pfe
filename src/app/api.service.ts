@@ -84,6 +84,15 @@ export class ApiService {
     localStorage.removeItem('auth_token');
   }
 
+  // 🔍 GET scan results method (NEW)
+  getScanResults(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/scan-results`)
+      .pipe(
+        tap(response => console.log('Scan results response:', response)),
+        catchError(this.handleError)
+      );
+  }
+
   // Scanner methods
   scanWithSonarQube(repoUrl: string): Observable<any> {
     const token = localStorage.getItem('auth_token');
@@ -136,10 +145,8 @@ export class ApiService {
     let errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
     
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
       errorMessage = `Erreur: ${error.error.message}`;
     } else {
-      // Server-side error
       if (error.status === 0) {
         errorMessage = 'Impossible de se connecter au serveur. Vérifiez votre connexion internet.';
       } else if (error.status === 401) {

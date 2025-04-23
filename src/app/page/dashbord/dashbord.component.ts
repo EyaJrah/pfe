@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../api.service';
-import { SecurityScanService } from '../../services/security-scan.service';
+import { interval } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 interface UserProfile {
   name: string;
@@ -30,11 +31,11 @@ export class DashbordComponent implements OnInit {
   isLoading: boolean = false;
   userInfo: UserProfile | null = null;
   isAuthenticated: boolean = false;
+  scanCount: number = 0;
 
   constructor(
     private router: Router,
     private apiService: ApiService,
-    private securityScanService: SecurityScanService
   ) { }
 
   ngOnInit() {
@@ -60,6 +61,8 @@ export class DashbordComponent implements OnInit {
         this.userInfo = response;
         this.isAuthenticated = true;
         this.isLoading = false;
+        
+       
       },
       error: (error: ApiError) => {
         console.error('Error fetching user profile:', error);
@@ -75,6 +78,8 @@ export class DashbordComponent implements OnInit {
     });
   }
 
+
+
   refreshPage() {
     window.location.reload();
   }
@@ -85,14 +90,39 @@ export class DashbordComponent implements OnInit {
     this.isLoading = true;
     
     if (this.githubUrl && this.isValidGithubUrl(this.githubUrl)) {
-      console.log('URL is valid, navigating to scan results');
+      console.log('URL is valid, extracting project key');
+      
+      // Extraire le projectKey de l'URL GitHub (format: username/repository)
+      const projectKey = this.extractProjectKey(this.githubUrl);
+      console.log('Extracted project key:', projectKey);
+      
+      console.log('Navigating to scan results with repo:', this.githubUrl, 'and projectKey:', projectKey);
       this.router.navigate(['/scan-results'], {
-        queryParams: { repo: this.githubUrl }
+        queryParams: { 
+          repo: this.githubUrl,
+          projectKey: projectKey
+        }
       });
     } else {
       console.log('Invalid URL');
       this.errorMessage = 'Please enter a valid GitHub repository URL (e.g., https://github.com/username/repository)';
       this.isLoading = false;
+    }
+  }
+
+  private extractProjectKey(url: string): string {
+    try {
+      // Format attendu: https://github.com/username/repository
+      const parts = url.split('/');
+      if (parts.length >= 5) {
+        const username = parts[3];
+        const repository = parts[4];
+        return `${username}_${repository}`;
+      }
+      return '';
+    } catch (error) {
+      console.error('Error extracting project key:', error);
+      return '';
     }
   }
 

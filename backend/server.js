@@ -71,7 +71,10 @@ mongoose.connect(process.env.MONGO_URI)
     console.error('Error connecting to MongoDB:', error);
   });
 
-// Routes
+const scanResults = require("./routes/scanResults");
+app.use("/api", scanResults);
+  
+  // Routes
 app.use('/api/auth', authRoutes);
 
 app.listen(PORT, () => {
