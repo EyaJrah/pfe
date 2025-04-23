@@ -1,142 +1,148 @@
 import { Component, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { ApiService } from '../../api.service';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { SecurityScanService, ScanResult } from '../../services/security-scan.service';
-import { forkJoin } from 'rxjs';
+
+interface SonarMeasure {
+  metric: string;
+  value: string;
+  bestValue: boolean;
+}
+
+interface SonarComponent {
+  id: string;
+  key: string;
+  name: string;
+  qualifier: string;
+  measures: SonarMeasure[];
+}
+
+interface SonarResponse {
+  component: SonarComponent;
+}
+
+interface SnykResponse {
+  vulnerabilities: any[];
+  ok: boolean;
+  dependencyCount: number;
+  summary: string;
+}
+
+interface Vulnerability {
+  title: string;
+  severity: string;
+  description: string;
+  solution?: string;
+}
+
+interface ScanResults {
+  sonar: SonarResponse;
+  snyk: SnykResponse;
+  trivy: Vulnerability[];
+  owasp: Vulnerability[];
+}
 
 @Component({
   selector: 'app-scan-results',
-  standalone: true,
-  imports: [CommonModule, RouterModule],
   templateUrl: './scan-results.component.html',
-  styleUrls: ['./scan-results.component.css']
+  styleUrls: ['./scan-results.component.css'],
+  standalone: true,
+  imports: [CommonModule]
 })
 export class ScanResultsComponent implements OnInit {
-  repositoryUrl: string = '';
-  scanResults: ScanResult[] = [];
-  isLoading: boolean = true;
-  selectedTool: string = 'all';
-  selectedSeverity: string = 'all';
-  filteredResults: ScanResult[] = [];
-  errorMessage: string = '';
+  loading = false;
+  error: string | null = null;
+  repositoryUrl: string | null = null;
+  
+  scanResults: ScanResults = {
+    sonar: {
+      component: {
+        id: "AZYe-T4LoevWM1RV8sjT",
+        key: "EyaJrah_pfe",
+        name: "pfe",
+        qualifier: "TRK",
+        measures: [
+          {
+            metric: "bugs",
+            value: "0",
+            bestValue: true
+          },
+          {
+            metric: "code_smells",
+            value: "68",
+            bestValue: false
+          },
+          {
+            metric: "vulnerabilities",
+            value: "3",
+            bestValue: false
+          }
+        ]
+      }
+    },
+    snyk: {
+      vulnerabilities: [],
+      ok: true,
+      dependencyCount: 287,
+      summary: "No known vulnerabilities"
+    },
+    trivy: [],
+    owasp: []
+  };
 
   constructor(
-    private route: ActivatedRoute, 
+    private apiService: ApiService,
     private router: Router,
-    private securityScanService: SecurityScanService
+    private route: ActivatedRoute
   ) {}
 
-  ngOnInit() {
-    console.log('ScanResultsComponent initialized');
+  ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      this.repositoryUrl = params['repo'] || '';
-      console.log('Repository URL from params:', this.repositoryUrl);
+      this.repositoryUrl = params['repo'];
       if (this.repositoryUrl) {
         this.loadScanResults();
       } else {
-        this.errorMessage = 'No repository URL provided';
-        this.isLoading = false;
+        this.error = 'No repository URL provided';
       }
     });
   }
 
-  loadScanResults() {
-    console.log('Loading scan results for:', this.repositoryUrl);
-    this.isLoading = true;
-    this.errorMessage = '';
-    
-    // Utiliser le service pour obtenir les résultats
-    this.securityScanService.analyzeRepository(this.repositoryUrl).subscribe(
-      results => {
-        console.log('Scan results received:', results);
-        this.scanResults = results;
-        this.filterResults();
-        this.isLoading = false;
+  loadScanResults(): void {
+    this.loading = true;
+    this.apiService.getScanResults().subscribe(
+      (data: any) => {
+        if (data.sonar) {
+          this.scanResults.sonar = data.sonar;
+        }
+        if (data.snyk) {
+          this.scanResults.snyk = data.snyk;
+        }
+        if (data.trivy) {
+          this.scanResults.trivy = data.trivy;
+        }
+        if (data.owasp) {
+          this.scanResults.owasp = data.owasp;
+        }
+        this.loading = false;
       },
       error => {
-        console.error('Error loading scan results:', error);
-        this.errorMessage = 'Failed to load scan results. Please try again later.';
-        // En cas d'erreur, utiliser des données de démonstration
-        this.loadDemoResults();
+        console.error('Error fetching scan results:', error);
+        this.loading = false;
+        this.error = 'Error loading scan results';
       }
     );
   }
 
-  // Méthode pour charger des données de démonstration en cas d'erreur
-  private loadDemoResults() {
-    console.log('Loading demo results');
-    setTimeout(() => {
-      this.scanResults = [
-        {
-          tool: 'SonarQube',
-          severity: 'High',
-          description: 'SQL Injection vulnerability detected',
-          location: 'src/database/query.js:45',
-          recommendation: 'Use parameterized queries to prevent SQL injection'
-        },
-        {
-          tool: 'Trivy',
-          severity: 'Medium',
-          description: 'Outdated package version',
-          location: 'package.json',
-          recommendation: 'Update to latest version'
-        },
-        {
-          tool: 'Snyk',
-          severity: 'Low',
-          description: 'Known vulnerability in dependency',
-          location: 'node_modules/package-name',
-          recommendation: 'Update dependency to patched version'
-        },
-        {
-          tool: 'OWASP Dependency Check',
-          severity: 'Info',
-          description: 'New version available',
-          location: 'pom.xml',
-          recommendation: 'Consider updating to latest version'
-        }
-      ];
-      this.filterResults();
-      this.isLoading = false;
-    }, 1500);
-  }
-
-  // Filtrer les résultats en fonction des sélections
-  filterResults() {
-    console.log('Filtering results. Tool:', this.selectedTool, 'Severity:', this.selectedSeverity);
-    this.filteredResults = this.scanResults.filter(result => {
-      const toolMatch = this.selectedTool === 'all' || result.tool.toLowerCase() === this.selectedTool.toLowerCase();
-      const severityMatch = this.selectedSeverity === 'all' || result.severity.toLowerCase() === this.selectedSeverity.toLowerCase();
-      return toolMatch && severityMatch;
-    });
-    console.log('Filtered results count:', this.filteredResults.length);
-  }
-
-  // Gérer le changement de filtre d'outil
-  onToolChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this.selectedTool = select.value;
-    console.log('Tool filter changed to:', this.selectedTool);
-    this.filterResults();
-  }
-
-  // Gérer le changement de filtre de sévérité
-  onSeverityChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this.selectedSeverity = select.value;
-    console.log('Severity filter changed to:', this.selectedSeverity);
-    this.filterResults();
-  }
-
-  goBack() {
-    console.log('Navigating back to dashboard');
-    this.router.navigate(['/dashbord']);
-  }
-
-  logout() {
-    // Supprimer le token d'authentification
-    localStorage.removeItem('token');
-    // Rediriger vers la page de connexion
+  logout(): void {
+    localStorage.removeItem('auth_token');
     this.router.navigate(['/login']);
   }
-} 
+
+  goBack(): void {
+    this.router.navigate(['/dashboard']);
+  }
+
+  retryScans(): void {
+    this.loadScanResults();
+  }
+}

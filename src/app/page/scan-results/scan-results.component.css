@@ -1,160 +1,182 @@
 .results-container {
-    padding: 0;
     width: 100%;
     margin: 0;
-    background-color: #f8f9fa;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    padding: 0;
 }
 
+/* Header Styles */
 .header {
-    text-align: center;
-    margin-bottom: 0;
-    width: 100%;
-    background: #2c3e50;
-    padding: 25px 40px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.header h1 {
-    color: #fff;
-    font-size: 1.8rem;
-    margin-bottom: 8px;
-    font-weight: 600;
-    text-align: center;
-}
-
-.repo-url {
-    color: #ecf0f1;
-    font-size: 1rem;
-    opacity: 0.9;
-    text-align: center;
-}
-
-.filters {
+    background-color: #2c3e50;
+    padding: 20px 0;
     display: flex;
-    gap: 20px;
-    margin: 20px 40px;
-    width: calc(100% - 80px);
-    justify-content: flex-start;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+    position: relative;
 }
 
-.tool-filter, .severity-filter {
-    padding: 10px 16px;
-    border-radius: 6px;
-    background-color: #f8f9fa;
-    color: #2c3e50;
-    border: 1px solid #e9ecef;
-    min-width: 180px;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-}
-
-.tool-filter:hover, .severity-filter:hover {
-    border-color: #2196f3;
-    background-color: #fff;
-}
-
-.tool-filter:focus, .severity-filter:focus {
-    outline: none;
-    border-color: #2196f3;
-    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
-    background-color: #fff;
-}
-
-.results-summary {
-    margin: 0 40px 20px;
-    color: #2c3e50;
-    font-size: 1rem;
-    text-align: left;
-    background: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.results-table {
-    width: calc(100% - 80px);
-    margin: 0 40px 30px;
-    border-collapse: separate;
-    border-spacing: 0;
-    background-color: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.results-table th,
-.results-table td {
-    padding: 16px 20px;
-    text-align: left;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.results-table th {
-    background-color: #f8f9fa;
-    color: #2c3e50;
-    font-weight: 600;
-    font-size: 0.95rem;
-    white-space: nowrap;
-}
-
-.results-table tr:hover {
-    background-color: #f8f9fa;
-}
-
-.severity-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    display: inline-block;
-}
-
-.high {
-    background-color: #ffebee;
-    color: #d32f2f;
-}
-
-.medium {
-    background-color: #fff3e0;
-    color: #f57c00;
-}
-
-.low {
-    background-color: #e8f5e9;
-    color: #388e3c;
-}
-
-.info {
-    background-color: #e3f2fd;
-    color: #1976d2;
-}
-
-.loading-spinner {
+.center-content {
+    text-align: center;
+    flex-grow: 1;
+    margin: 0 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.checksec-logo {
+    display: flex;
+    align-items: center;
     justify-content: center;
-    min-height: 300px;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.checksec-logo img {
+    height: 32px;
+}
+
+.checksec-logo h1 {
+    color: white;
+    margin: 0;
+    font-size: 24px;
+}
+
+.tagline {
+    color: #ecf0f1;
+    margin: 5px 0 15px;
+    font-size: 14px;
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+nav a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.logout-button {
+    background-color: transparent;
+    color: white;
+    border: 1px solid white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    position: absolute;
+    right: 20px;
+    top: 20px;
+}
+
+.logout-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.logout-button img {
+    width: 20px;
+    height: 20px;
+}
+
+@media (max-width: 1240px) {
+    .logout-button {
+        right: 20px;
+    }
+}
+
+/* Content Styles */
+.content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    margin: 40px auto;
+    text-align: center;
+    max-width: 800px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+
+.page-header h1 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 2.5em;
+    font-weight: 600;
+}
+
+.repo-url {
+    color: #7f8c8d;
+    font-size: 1.2em;
+    margin: 0;
+    word-break: break-all;
+}
+
+/* Tool Sections */
+.tool-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    padding: 20px;
+}
+
+.tool-section h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.json-container {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 15px;
+    overflow-x: auto;
+}
+
+.json-container pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #2c3e50;
+}
+
+/* Loading and Error States */
+.loading-spinner {
+    text-align: center;
+    padding: 40px;
 }
 
 .spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid #e9ecef;
-    border-top: 3px solid #2196f3;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-bottom: 15px;
+    margin: 0 auto 15px;
 }
 
 @keyframes spin {
@@ -162,238 +184,305 @@
     100% { transform: rotate(360deg); }
 }
 
-.no-results {
-    text-align: center;
-    padding: 40px;
-    background-color: white;
-    border-radius: 8px;
-    margin: 20px 40px;
-    color: #6c757d;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
 .error-message {
-    text-align: center;
-    padding: 20px;
-    background-color: #ffebee;
-    color: #d32f2f;
-    border-radius: 8px;
-    margin: 20px 40px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    background-color: #fff3f3;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
 }
 
-.back-button {
-    margin: 0 40px 30px;
-    padding: 10px 20px;
-    background-color: #2196f3;
+.retry-button {
+    background-color: #dc3545;
     color: white;
     border: none;
-    border-radius: 6px;
-    font-size: 0.95rem;
+    padding: 8px 16px;
+    border-radius: 4px;
+    margin-top: 10px;
     cursor: pointer;
-    transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+    background-color: #c82333;
+}
+
+/* Back Button */
+.back-button {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+    text-decoration: none;
+}
+
+.back-button i {
+    margin-right: 8px;
 }
 
 .back-button:hover {
-    background-color: #1976d2;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-color: #5a6268;
 }
 
-.back-button:active {
-    transform: translateY(0);
-    box-shadow: none;
-}
-
+/* Responsive Design */
 @media (max-width: 768px) {
     .header {
         padding: 20px;
+        flex-direction: column;
+        gap: 15px;
     }
 
-    .filters {
-        margin: 15px;
-        width: calc(100% - 30px);
+    .center-content {
+        margin: 15px 0;
+    }
+
+    nav {
         flex-direction: column;
         gap: 10px;
     }
 
-    .tool-filter, .severity-filter {
-        width: 100%;
+    .content {
+        padding: 10px;
     }
 
-    .results-summary {
-        margin: 0 15px 15px;
+    .json-container {
+        padding: 10px;
     }
 
-    .results-table {
-        width: calc(100% - 30px);
-        margin: 0 15px 20px;
-        display: block;
-        overflow-x: auto;
+    .json-container pre {
+        font-size: 12px;
     }
+}
 
-    .no-results, .error-message {
-        margin: 15px;
-    }
+/* Metrics Section */
+.metrics-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    padding: 20px;
+}
 
-    .back-button {
-        margin: 0 15px 20px;
-    }
+.metrics-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
 
-    .header h1 {
-        font-size: 1.5rem;
-    }
+.metrics-table th,
+.metrics-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.metrics-table th {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+/* Vulnerability Tables */
+.vulnerabilities-section {
+    margin-top: 30px;
+}
+
+.vulnerability-table {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    padding: 20px;
+}
+
+.vulnerability-table h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.vulnerability-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.vulnerability-table th,
+.vulnerability-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.vulnerability-table th {
+    background-color: #f8f9fa;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+/* Severity Classes */
+.severity-critical {
+    background-color: #dc3545;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.severity-high {
+    background-color: #fd7e14;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.severity-medium {
+    background-color: #ffc107;
+    color: black;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.severity-low {
+    background-color: #28a745;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.severity-unknown {
+    background-color: #6c757d;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* Rating Classes */
+.rating-a {
+    background-color: #28a745;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.rating-b {
+    background-color: #93c47d;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.rating-c {
+    background-color: #ffd966;
+    color: black;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.rating-d {
+    background-color: #e69138;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.rating-e {
+    background-color: #dc3545;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* No Vulnerabilities Message */
+.no-vulnerabilities {
+    text-align: center;
+    padding: 40px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    color: #28a745;
+}
+
+.no-vulnerabilities i {
+    font-size: 48px;
+    margin-bottom: 15px;
 }
 
 /* Styles pour l'en-tête du dashboard */
 .dashboard-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding: 20px;
     background-color: #2c3e50;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    position: relative;
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .logo-and-title {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.logo img {
-    width: 50px;
-    height: auto;
-}
-
-.logo-and-title h1 {
-    font-size: 2rem;
-    color: #ffffff;
-    margin: 0;
-}
-
-.dashboard-header p {
-    color: #b3c5d7;
-    margin: 0 0 15px 0;
-}
-
-.scan-title {
-    font-size: 1.5rem !important;
-    color: #ffffff !important;
-    font-weight: 500;
-    margin: 10px 0 !important;
-}
-
-.repo-url {
-    font-size: 1.1rem !important;
-    color: #b3c5d7 !important;
-    margin: 0 0 15px 0 !important;
+    gap: 20px;
 }
 
 .main-menu ul {
     list-style: none;
-    padding: 0;
-    margin: 0;
     display: flex;
-    justify-content: center;
     gap: 20px;
-}
-
-.main-menu ul li a {
-    text-decoration: none;
-    color: #ffffff;
-    font-size: 1.2rem;
-    font-weight: 500;
-    padding: 10px 15px;
-    border-radius: 5px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.main-menu ul li a:hover {
-    background-color: #34495e;
-    color: #ffffff;
-}
-
-.main-menu ul li a.active {
-    background-color: #3498db;
-    color: #ffffff;
-}
-
-.logout-button {
-    background-color: #2c3e50;
-    color: #ffffff;
-    padding: 10px 20px;
-    font-size: 16px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    position: fixed;
-    right: 20px;
-    top: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    z-index: 1000;
-    border-radius: 4px;
-}
-
-.logout-button:hover {
-    background-color: #34495e;
-}
-
-.logout-icon {
-    width: 20px;
-    height: 20px;
-    margin-left: 5px;
-}
-
-/* Styles pour l'en-tête des résultats de scan */
-.scan-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.scan-header h2 {
-    font-size: 2rem;
-    color: #2c3e50;
-    margin-bottom: 10px;
-}
-
-.repository-url {
-    font-size: 1.1rem;
-    color: #6c757d;
     margin: 0;
+    padding: 0;
+}
+
+.main-menu a {
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+}
+
+.main-menu a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
 }
 
 .scan-info {
     text-align: center;
-    padding: 20px;
-    background-color: #ffffff;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin: 40px 0;
 }
 
 .scan-info h2 {
-    font-size: 1.8rem;
     color: #2c3e50;
-    margin: 0 0 10px 0;
-    font-weight: 600;
+    margin-bottom: 10px;
 }
 
-.scan-info .repo-url {
-    font-size: 1.1rem;
-    color: #0d47a1 !important;
-    margin: 0;
-    font-weight: 600;
-} 
+.scan-results-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: #3498db;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+/* Add any additional styles you need */ 
