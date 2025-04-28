@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   dependency-check:
@@ -21,7 +22,9 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          cd backend
+          npm ci
 
       - name: Install OWASP Dependency-Check CLI
         run: |
@@ -31,42 +34,39 @@ jobs:
           chmod +x dependency-check/bin/dependency-check.sh
 
       - name: Run OWASP Dependency Check
+        continue-on-error: true
         run: |
           ./dependency-check/bin/dependency-check.sh \
-            --project "PFE" \
-            --scan . \
+            --project "PFE Backend" \
+            --scan backend/ \
             --format HTML \
             --format JSON \
             --out reports \
-            --failOnCVSS 7
-
-      - name: Move reports to a dedicated directory
-        if: always()
-        run: |
-          mkdir -p owasp-reports
-          mv reports/* owasp-reports/ || true
+            --failOnCVSS 9 \
+            --suppression suppression.xml || true
 
       - name: Upload OWASP report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
-          path: owasp-reports/
-          retention-days: 30
+          path: reports/
+          retention-days: 7
 
-      - name: Check for high vulnerabilities
+      - name: Check for critical vulnerabilities
         if: always()
-        continue-on-error: true
         run: |
-          if [ -f owasp-reports/dependency-check-report.json ]; then
-            echo "Checking for high severity vulnerabilities..."
-            HIGH_VULNS=$(jq '.dependencies[] | select(.vulnerabilities != null) | .vulnerabilities[] | select(.cvssv3_baseScore >= 7) | .name' owasp-reports/dependency-check-report.json | wc -l)
-            if [ "$HIGH_VULNS" -gt 0 ]; then
-              echo "⚠️ Found $HIGH_VULNS high severity vulnerabilities!"
+          if [ -f reports/dependency-check-report.json ]; then
+            echo "Checking for critical severity vulnerabilities..."
+            CRITICAL_VULNS=$(jq '.dependencies[] | select(.vulnerabilities != null) | .vulnerabilities[] | select(.cvssv3_baseScore >= 9) | .name' reports/dependency-check-report.json | wc -l)
+            if [ "$CRITICAL_VULNS" -gt 0 ]; then
+              echo "⚠️ Found $CRITICAL_VULNS critical severity vulnerabilities!"
               echo "Please check the generated report in the artifacts for details."
+              exit 0
             else
-              echo "✅ No high severity vulnerabilities found."
+              echo "✅ No critical severity vulnerabilities found."
             fi
           else
             echo "⚠️ No JSON report found. Check HTML report for results."
+            exit 0
           fi

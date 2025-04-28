@@ -40,37 +40,342 @@
 
     <!-- Results Content -->
     <div *ngIf="!loading && !error" class="results-content">
-      <!-- SonarCloud Results -->
-      <section class="tool-section">
-        <h2>SonarCloud Analysis</h2>
-        <div class="json-container">
-          <pre>{{ scanResults.sonar | json }}</pre>
-        </div>
-      </section>
+      <!-- Tool Results -->
+      <div class="tool-results-grid">
+        <!-- Snyk Results -->
+        <section class="tool-section">
+          <div class="tool-header">
+            <img src="assets/images/snyk-logo.png" alt="Snyk Logo" class="tool-logo">
+            <h2>Snyk Security Analysis</h2>
+          </div>
+          <div class="summary-card" *ngIf="scanResults.snyk">
+            <div class="snyk-header">
+              <div class="status-indicator" [class.status-ok]="scanResults.snyk.ok">
+                <i class="fas" [class.fa-check-circle]="scanResults.snyk.ok" [class.fa-exclamation-triangle]="!scanResults.snyk.ok"></i>
+                <span>{{ scanResults.snyk.ok ? 'No vulnerabilities detected' : 'Vulnerabilities found' }}</span>
+              </div>
+            </div>
 
-      <!-- Snyk Results -->
-      <section class="tool-section">
-        <h2>Snyk Analysis</h2>
-        <div class="json-container">
-          <pre>{{ scanResults.snyk | json }}</pre>
-        </div>
-      </section>
+            <div class="metrics-grid">
+              <div class="metric-card" *ngFor="let severity of ['critical', 'high', 'medium', 'low']">
+                <div class="metric-icon" [ngClass]="'severity-' + severity">
+                  <i class="fas" [ngClass]="getSeverityIcon(severity)"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-value" [ngClass]="'metric-' + severity">
+                    {{ getSnykVulnerabilities(severity) }}
+                  </span>
+                  <span class="metric-label">{{ severity | titlecase }} Vulnerabilities</span>
+                </div>
+              </div>
+            </div>
 
-      <!-- Trivy Results -->
-      <section class="tool-section" *ngIf="scanResults.trivy.length > 0">
-        <h2>Trivy Scan Results</h2>
-        <div class="json-container">
-          <pre>{{ scanResults.trivy | json }}</pre>
-        </div>
-      </section>
+            <div class="summary-text" *ngIf="scanResults.snyk.summary">
+              <p><strong>Summary:</strong> {{ scanResults.snyk.summary }}</p>
+            </div>
 
-      <!-- OWASP Results -->
-      <section class="tool-section" *ngIf="scanResults.owasp.length > 0">
-        <h2>OWASP Analysis</h2>
-        <div class="json-container">
-          <pre>{{ scanResults.owasp | json }}</pre>
-        </div>
-      </section>
+            <div class="details-toggle" (click)="toggleSnykDetails()">
+              <span>View Details</span>
+              <i class="fas" [class.fa-chevron-down]="!showSnykDetails" [class.fa-chevron-up]="showSnykDetails"></i>
+            </div>
+
+            <div class="details-content" *ngIf="showSnykDetails">
+              <div class="vulnerabilities-section" *ngIf="scanResults.snyk.vulnerabilities && scanResults.snyk.vulnerabilities.length > 0">
+                <h3>Vulnerabilities</h3>
+                <div class="vuln-table-container">
+                  <table class="vulnerability-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Package</th>
+                        <th>Severity</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let vuln of scanResults.snyk.vulnerabilities">
+                        <td>{{ vuln.id }}</td>
+                        <td>{{ vuln.title }}</td>
+                        <td>{{ vuln.packageName }}</td>
+                        <td>
+                          <span class="severity-badge" [ngClass]="'severity-' + vuln.severity.toLowerCase()">
+                            {{ vuln.severity }}
+                          </span>
+                        </td>
+                        <td>{{ vuln.description }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="no-vulnerabilities" *ngIf="!scanResults.snyk.vulnerabilities || scanResults.snyk.vulnerabilities.length === 0">
+                <i class="fas fa-check-circle"></i>
+                <p>No vulnerabilities found</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SonarCloud Results -->
+        <section class="tool-section">
+          <div class="tool-header">
+            <img src="assets/images/sonar-logo.png" alt="SonarCloud Logo" class="tool-logo">
+            <h2>SonarCloud Quality Analysis</h2>
+          </div>
+          <div class="summary-card" *ngIf="scanResults.sonar?.component">
+            <div class="sonar-header">
+              <p><strong>Project:</strong> {{ scanResults.sonar.component.name }}</p>
+              <p><strong>Key:</strong> {{ scanResults.sonar.component.key }}</p>
+            </div>
+            
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-bug"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-value" [class.metric-warning]="getBugCount() > 0">
+                    {{ getBugCount() || '0' }}
+                  </span>
+                  <span class="metric-label">Bugs</span>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-code"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-value" [class.metric-warning]="getCodeSmellCount() > 0">
+                    {{ getCodeSmellCount() || '0' }}
+                  </span>
+                  <span class="metric-label">Code Smells</span>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-value">
+                    {{ getCoverage() || '0' }}%
+                  </span>
+                  <span class="metric-label">Coverage</span>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-icon">
+                  <i class="fas fa-copy"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-value">
+                    {{ getDuplication() || '0' }}%
+                  </span>
+                  <span class="metric-label">Duplications</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="details-toggle" (click)="toggleSonarDetails()">
+              <span>View Details</span>
+              <i class="fas" [class.fa-chevron-down]="!showSonarDetails" [class.fa-chevron-up]="showSonarDetails"></i>
+            </div>
+
+            <div class="details-content" *ngIf="showSonarDetails">
+              <div class="vulnerabilities-section">
+                <h3>Security Vulnerabilities</h3>
+                <div class="vuln-table-container" *ngIf="scanResults.sonar.issues && scanResults.sonar.issues.length > 0">
+                  <table class="vulnerability-table">
+                    <thead>
+                      <tr>
+                        <th>Key</th>
+                        <th>Component</th>
+                        <th>Line</th>
+                        <th>Message</th>
+                        <th>Severity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let issue of scanResults.sonar.issues">
+                        <td>{{ issue.key }}</td>
+                        <td>{{ issue.component }}</td>
+                        <td>{{ issue.line }}</td>
+                        <td>{{ issue.message }}</td>
+                        <td>
+                          <span class="severity-badge" [ngClass]="'severity-' + issue.severity.toLowerCase()">
+                            {{ issue.severity }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="no-vulnerabilities" *ngIf="!scanResults.sonar.issues || scanResults.sonar.issues.length === 0">
+                  <i class="fas fa-check-circle"></i>
+                  <p>No security vulnerabilities found</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Trivy Results -->
+        <section class="tool-section">
+          <div class="tool-header">
+            <img src="assets/images/trivy-logo.png" alt="Trivy Logo" class="tool-logo">
+            <h2>Trivy Security Analysis</h2>
+          </div>
+          <div class="summary-card">
+            <div class="trivy-summary">
+              <div class="summary-stats">
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTrivyTotalVulnerabilities() }}</span>
+                  <span class="stat-label">Total Vulnerabilities</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTrivyCriticalVulnerabilities() }}</span>
+                  <span class="stat-label">Critical</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTrivyHighVulnerabilities() }}</span>
+                  <span class="stat-label">High</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTrivyMediumVulnerabilities() }}</span>
+                  <span class="stat-label">Medium</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTrivyLowVulnerabilities() }}</span>
+                  <span class="stat-label">Low</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="details-toggle" (click)="toggleTrivyDetails()">
+              <span>View Details</span>
+              <i class="fas" [class.fa-chevron-down]="!showTrivyDetails" [class.fa-chevron-up]="showTrivyDetails"></i>
+            </div>
+
+            <div class="details-content" *ngIf="showTrivyDetails">
+              <div class="vulnerabilities-section" *ngIf="scanResults.trivy && scanResults.trivy.length > 0">
+                <h3>Vulnerabilities by Target</h3>
+                <div *ngFor="let result of scanResults.trivy">
+                  <h4>{{ result.Target }}</h4>
+                  <div class="vuln-table-container" *ngIf="result.Vulnerabilities && result.Vulnerabilities.length > 0">
+                    <table class="vulnerability-table">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Package</th>
+                          <th>Installed Version</th>
+                          <th>Fixed Version</th>
+                          <th>Severity</th>
+                          <th>Title</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let vuln of result.Vulnerabilities">
+                          <td>{{ vuln.VulnerabilityID }}</td>
+                          <td>{{ vuln.PkgName }}</td>
+                          <td>{{ vuln.InstalledVersion }}</td>
+                          <td>{{ vuln.FixedVersion }}</td>
+                          <td>
+                            <span class="severity-badge" [ngClass]="'severity-' + vuln.Severity.toLowerCase()">
+                              {{ vuln.Severity }}
+                            </span>
+                          </td>
+                          <td>{{ vuln.Title }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="no-vulnerabilities" *ngIf="!result.Vulnerabilities || result.Vulnerabilities.length === 0">
+                    <i class="fas fa-check-circle"></i>
+                    <p>No vulnerabilities found in this target</p>
+                  </div>
+                </div>
+              </div>
+              <div class="no-vulnerabilities" *ngIf="!scanResults.trivy || scanResults.trivy.length === 0">
+                <i class="fas fa-check-circle"></i>
+                <p>No vulnerabilities found</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- OWASP Dependency Check Results -->
+        <section class="tool-section">
+          <div class="tool-header">
+            <img src="assets/images/owasp-logo.png" alt="OWASP Logo" class="tool-logo">
+            <h2>OWASP Dependency Check</h2>
+          </div>
+          <div class="summary-card">
+            <div class="owasp-summary">
+              <div class="summary-stats">
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTotalOwaspVulnerabilities() }}</span>
+                  <span class="stat-label">Total Vulnerabilities</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getOwaspVulnerabilities('critical') }}</span>
+                  <span class="stat-label">Critical</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getOwaspVulnerabilities('high') }}</span>
+                  <span class="stat-label">High</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getOwaspVulnerabilities('medium') }}</span>
+                  <span class="stat-label">Medium</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getOwaspVulnerabilities('low') }}</span>
+                  <span class="stat-label">Low</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="details-toggle" (click)="toggleOwaspDetails()">
+              <span>View Details</span>
+              <i class="fas" [class.fa-chevron-down]="!showOwaspDetails" [class.fa-chevron-up]="showOwaspDetails"></i>
+            </div>
+
+            <div class="details-content" *ngIf="showOwaspDetails">
+              <div class="vulnerabilities-section" *ngIf="scanResults.owasp && scanResults.owasp.vulnerabilities && scanResults.owasp.vulnerabilities.length > 0">
+                <h3>Vulnerabilities</h3>
+                <div class="vuln-table-container">
+                  <table class="vulnerability-table">
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Severity</th>
+                        <th>Description</th>
+                        <th>Solution</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let vuln of scanResults.owasp.vulnerabilities">
+                        <td>{{ vuln.title }}</td>
+                        <td>
+                          <span class="severity-badge" [ngClass]="'severity-' + vuln.severity.toLowerCase()">
+                            {{ vuln.severity }}
+                          </span>
+                        </td>
+                        <td>{{ vuln.description }}</td>
+                        <td>{{ vuln.solution || 'No solution provided' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="no-vulnerabilities" *ngIf="!scanResults.owasp || !scanResults.owasp.vulnerabilities || scanResults.owasp.vulnerabilities.length === 0">
+                <i class="fas fa-check-circle"></i>
+                <p>No vulnerabilities found</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
 
     <!-- Back Button -->

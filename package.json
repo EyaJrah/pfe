@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:app": "node dist/app/server/server.mjs"
+    "serve:ssr:app": "node dist/app/server/server.mjs",
+    "server": "node server.js"
   },
   "private": true,
   "dependencies": {
@@ -23,15 +24,16 @@
     "@angular/router": "^19.1.0",
     "@angular/ssr": "^19.1.7",
     "@inquirer/prompts": "^7.3.2",
-    "axios": "^1.8.4",
+    "axios": "^1.9.0",
     "bcryptjs": "^3.0.2",
     "body-parser": "^1.20.3",
     "bootstrap": "^5.3.3",
+    "child_process": "^1.0.2",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "express-validator": "^7.2.1",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.10.1",
+    "mongoose": "^8.14.0",
     "node-fetch": "^3.3.2",
     "primeng": "^19.0.6",
     "rxjs": "~7.8.0",
