@@ -8,14 +8,14 @@ import { catchError, tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = environment.apiUrl;
+  private readonly backendUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) { }
 
   // Signup method
   signup(name: string, email: string, password: string): Observable<any> {
-    console.log('Sending signup request to:', `${this.apiUrl}/auth/signup`);
-    return this.http.post(`${this.apiUrl}/auth/signup`, { name, email, password })
+    console.log('Sending signup request to:', `${this.backendUrl}/auth/signup`);
+    return this.http.post(`${this.backendUrl}/auth/signup`, { name, email, password })
       .pipe(
         tap(response => console.log('Signup response:', response)),
         catchError(this.handleError)
@@ -26,10 +26,10 @@ export class ApiService {
   login(email: string, password: string): Observable<any> {
     const body = { email, password };
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    console.log('Sending login request to:', `${this.apiUrl}/auth/login`);
+    console.log('Sending login request to:', `${this.backendUrl}/users/login`);
     console.log('With body:', body);
     
-    return this.http.post<any>(`${this.apiUrl}/auth/login`, body, { headers })
+    return this.http.post<any>(`${this.backendUrl}/users/login`, body, { headers })
       .pipe(
         tap(response => {
           console.log('Login response:', response);
@@ -54,7 +54,7 @@ export class ApiService {
     }
     
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get(`${this.apiUrl}/auth/profile`, { headers })
+    return this.http.get(`${this.backendUrl}/users/profile`, { headers })
       .pipe(
         tap(response => console.log('Profile response:', response)),
         catchError(this.handleError)
@@ -71,7 +71,7 @@ export class ApiService {
     }
     
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.put(`${this.apiUrl}/auth/profile`, { name, email }, { headers })
+    return this.http.put(`${this.backendUrl}/users/profile`, { name, email }, { headers })
       .pipe(
         tap(response => console.log('Update profile response:', response)),
         catchError(this.handleError)
@@ -84,9 +84,19 @@ export class ApiService {
     localStorage.removeItem('auth_token');
   }
 
-  // 🔍 GET scan results method (NEW)
-  getScanResults(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/scan-results`)
+  // Get scan results - can be used with or without a specific repoUrl
+  getScanResults(repoUrl?: string): Observable<any> {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      return throwError(() => new Error('No authentication token found'));
+    }
+
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    const url = repoUrl 
+      ? `${this.backendUrl}/scan-results?repoUrl=${encodeURIComponent(repoUrl)}`
+      : `${this.backendUrl}/scan-results`;
+
+    return this.http.get(url, { headers })
       .pipe(
         tap(response => console.log('Scan results response:', response)),
         catchError(this.handleError)
@@ -101,7 +111,7 @@ export class ApiService {
     }
 
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post(`${this.apiUrl}/scanners/sonarqube`, { repoUrl }, { headers })
+    return this.http.post(`${this.backendUrl}/scan-results/sonar`, { repoUrl }, { headers })
       .pipe(catchError(this.handleError));
   }
 
@@ -112,7 +122,7 @@ export class ApiService {
     }
 
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post(`${this.apiUrl}/scanners/trivy`, { repoUrl }, { headers })
+    return this.http.post(`${this.backendUrl}/scan-results/trivy`, { repoUrl }, { headers })
       .pipe(catchError(this.handleError));
   }
 
@@ -123,7 +133,7 @@ export class ApiService {
     }
 
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post(`${this.apiUrl}/scanners/snyk`, { repoUrl }, { headers })
+    return this.http.post(`${this.backendUrl}/scan-results/snyk`, { repoUrl }, { headers })
       .pipe(catchError(this.handleError));
   }
 
@@ -134,10 +144,10 @@ export class ApiService {
     }
 
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post(`${this.apiUrl}/scanners/owasp`, { repoUrl }, { headers })
+    return this.http.post(`${this.backendUrl}/scan-results/owasp`, { repoUrl }, { headers })
       .pipe(catchError(this.handleError));
   }
-  
+
   // Centralized error handling
   private handleError(error: HttpErrorResponse) {
     console.error('API Error:', error);
