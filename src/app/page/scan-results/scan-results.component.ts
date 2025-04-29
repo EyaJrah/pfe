@@ -13,21 +13,23 @@ interface SonarMeasure {
 }
 
 interface SonarComponent {
-  name: string;
+  id: string;
   key: string;
-  measures: Array<{
-    metric: string;
-    value: string;
-  }>;
+  name: string;
+  qualifier: string;
+  measures: SonarMeasure[];
 }
 
 interface SonarIssue {
-  rule: string;
-  component: string;
-  severity: string;
-  message: string;
   key: string;
-  line: number;
+  rule: string;
+  severity: string;
+  component: string;
+  project: string;
+  line?: number;
+  message: string;
+  type: string;
+  status: string;
 }
 
 interface SnykVulnerability {
@@ -150,8 +152,10 @@ export class ScanResultsComponent implements OnInit {
     },
     sonar: {
       component: {
-        name: '',
+        id: '',
         key: '',
+        name: '',
+        qualifier: '',
         measures: []
       },
       issues: []
@@ -181,7 +185,8 @@ export class ScanResultsComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private http: HttpClient,
-    private securityScanService: SecurityScanService
+    private securityScanService: SecurityScanService,
+    private scanService: ScanService
   ) {}
 
   ngOnInit(): void {
