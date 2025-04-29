@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FooterComponent } from './footer.component';
-import { NavigationService } from '../../services/navigation.service';
-import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { NavigationService } from '../../services/navigation.service';
 
 describe('FooterComponent', () => {
   let component: FooterComponent;
@@ -10,18 +9,18 @@ describe('FooterComponent', () => {
   let navigationService: jest.Mocked<NavigationService>;
 
   beforeEach(async () => {
+    // Créer un mock du service de navigation
     navigationService = {
       navigateAndReload: jest.fn().mockResolvedValue(true)
     } as any;
 
     await TestBed.configureTestingModule({
       imports: [
-        FooterComponent,
-        RouterTestingModule.withRoutes([])
+        RouterTestingModule,
+        FooterComponent
       ],
       providers: [
-        { provide: NavigationService, useValue: navigationService },
-        { provide: ActivatedRoute, useValue: { snapshot: {}, parent: {} } }
+        { provide: NavigationService, useValue: navigationService }
       ]
     }).compileComponents();
 
@@ -30,12 +29,15 @@ describe('FooterComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('devrait être créé', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should call navigation service when refreshPage is called', () => {
+  it('devrait appeler le service de navigation lors de l\'appel à refreshPage', () => {
+    // Appeler la méthode du composant
     component.refreshPage();
-    expect(navigationService.navigateAndReload).toHaveBeenCalled();
+    
+    // Vérifier que le service a été appelé avec le bon chemin
+    expect(navigationService.navigateAndReload).toHaveBeenCalledWith('/dashbord');
   });
-});
+}); 
