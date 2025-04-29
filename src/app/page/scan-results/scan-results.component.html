@@ -45,14 +45,13 @@
         <!-- Snyk Results -->
         <section class="tool-section">
           <div class="tool-header">
-            <img src="assets/images/snyk-logo.png" alt="Snyk Logo" class="tool-logo">
+            <img src="assets/images/snyk.png" alt="Snyk Logo" class="tool-logo">
             <h2>Snyk Security Analysis</h2>
           </div>
           <div class="summary-card" *ngIf="scanResults.snyk">
             <div class="snyk-header">
               <div class="status-indicator" [class.status-ok]="scanResults.snyk.ok">
                 <i class="fas" [class.fa-check-circle]="scanResults.snyk.ok" [class.fa-exclamation-triangle]="!scanResults.snyk.ok"></i>
-                <span>{{ scanResults.snyk.ok ? 'No vulnerabilities detected' : 'Vulnerabilities found' }}</span>
               </div>
             </div>
 
@@ -120,7 +119,7 @@
         <!-- SonarCloud Results -->
         <section class="tool-section">
           <div class="tool-header">
-            <img src="assets/images/sonar-logo.png" alt="SonarCloud Logo" class="tool-logo">
+            <img src="assets/images/sonarcloud.png" alt="SonarCloud Logo" class="tool-logo">
             <h2>SonarCloud Quality Analysis</h2>
           </div>
           <div class="summary-card" *ngIf="scanResults.sonar?.component">
@@ -222,7 +221,7 @@
         <!-- Trivy Results -->
         <section class="tool-section">
           <div class="tool-header">
-            <img src="assets/images/trivy-logo.png" alt="Trivy Logo" class="tool-logo">
+            <img src="assets/images/trivy.png" alt="Trivy Logo" class="tool-logo">
             <h2>Trivy Security Analysis</h2>
           </div>
           <div class="summary-card">
@@ -306,7 +305,7 @@
         <!-- OWASP Dependency Check Results -->
         <section class="tool-section">
           <div class="tool-header">
-            <img src="assets/images/owasp-logo.png" alt="OWASP Logo" class="tool-logo">
+            <img src="assets/images/depcheck.png" alt="OWASP Logo" class="tool-logo">
             <h2>OWASP Dependency Check</h2>
           </div>
           <div class="summary-card">
