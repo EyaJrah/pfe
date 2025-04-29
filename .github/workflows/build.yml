@@ -26,6 +26,21 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:coverage
         
+      - name: Check SonarCloud Configuration
+        run: |
+          if [ -n "${{ secrets.SONAR_TOKEN }}" ]; then
+            echo "SONAR_TOKEN is configured"
+          else
+            echo "SONAR_TOKEN is not configured"
+            exit 1
+          fi
+          if [ -n "${{ secrets.SONAR_ORGANIZATION }}" ]; then
+            echo "SONAR_ORGANIZATION is configured: ${{ secrets.SONAR_ORGANIZATION }}"
+          else
+            echo "SONAR_ORGANIZATION is not configured"
+            exit 1
+          fi
+        
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
