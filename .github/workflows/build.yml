@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - scanresult
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
