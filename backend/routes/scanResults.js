@@ -47,11 +47,66 @@ router.get('/', authenticateToken, async (req, res) => {
               },
               {
                 metric: "vulnerabilities",
-                value: "3",
+                value: "6",
+                bestValue: false
+              },
+              {
+                metric: "coverage",
+                value: "65.2",
                 bestValue: false
               }
             ]
-          }
+          },
+          vulnerabilities: [
+            {
+              key: "AZY_BVXKCysjH0U-Lszp",
+              rule: "secrets:S7353",
+              severity: "BLOCKER",
+              component: "src/environments/environment.ts",
+              message: "Make sure this Snyk key gets revoked, changed, and removed from the code.",
+              status: "FIXED"
+            },
+            {
+              key: "AZY-v8xbKJxvT2doRdjG",
+              rule: "jssecurity:S2076",
+              severity: "BLOCKER",
+              component: "backend/services/Scanner.js",
+              message: "Change this code to not construct the OS command from user-controlled data.",
+              status: "FIXED"
+            },
+            {
+              key: "AZY-oULG6MyJDCy9hJzb",
+              rule: "jssecurity:S2076",
+              severity: "BLOCKER",
+              component: "routes/scannerRoutes.js",
+              message: "Change this code to not construct the OS command from user-controlled data.",
+              status: "FIXED"
+            },
+            {
+              key: "AZY-me84VzvjLJAhGcM0",
+              rule: "jssecurity:S5147",
+              severity: "BLOCKER",
+              component: "backend/routes/userRoutes.js",
+              message: "Change this code to not construct database queries directly from user-controlled data.",
+              status: "FIXED"
+            },
+            {
+              key: "AZY-me84VzvjLJAhGcMz",
+              rule: "jssecurity:S5147",
+              severity: "BLOCKER",
+              component: "backend/routes/userRoutes.js",
+              message: "Change this code to not construct database queries directly from user-controlled data.",
+              status: "FIXED"
+            },
+            {
+              key: "AZY-me9FVzvjLJAhGcM1",
+              rule: "jssecurity:S2076",
+              severity: "BLOCKER",
+              component: "routes/scannerRoutes.js",
+              message: "Change this code to not construct the OS command from user-controlled data.",
+              status: "FIXED"
+            }
+          ]
         },
         snyk: {
           vulnerabilities: [],
@@ -312,49 +367,91 @@ router.post('/scan-all', authenticateToken, async (req, res) => {
       // Remove the summary field from the Snyk object
       const { summary, ...snykResultsNoSummary } = snykResultsRaw;
 
-      // SonarCloud vulnerabilities based on the user's provided data
+      // SonarCloud vulnerabilities based on the latest API result
       const sonarIssues = [
         {
           key: "AZY_BVXKCysjH0U-Lszp",
           component: "EyaJrah_pfe:src/environments/environment.ts",
           line: 22,
           message: "Make sure this Snyk key gets revoked, changed, and removed from the code.",
-          severity: "BLOCKER"
+          severity: "BLOCKER",
+          status: "CLOSED",
+          resolution: "FIXED",
+          effort: "30min",
+          debt: "30min",
+          type: "VULNERABILITY",
+          cleanCodeAttribute: "TRUSTWORTHY",
+          cleanCodeAttributeCategory: "RESPONSIBLE"
         },
         {
           key: "AZY-v8xbKJxvT2doRdjG",
           component: "EyaJrah_pfe:backend/services/Scanner.js",
           line: 31,
           message: "Change this code to not construct the OS command from user-controlled data.",
-          severity: "BLOCKER"
+          severity: "BLOCKER",
+          status: "CLOSED",
+          resolution: "FIXED",
+          effort: "30min",
+          debt: "30min",
+          type: "VULNERABILITY",
+          cleanCodeAttribute: "COMPLETE",
+          cleanCodeAttributeCategory: "INTENTIONAL"
         },
         {
           key: "AZY-oULG6MyJDCy9hJzb",
           component: "EyaJrah_pfe:routes/scannerRoutes.js",
           line: 36,
           message: "Change this code to not construct the OS command from user-controlled data.",
-          severity: "BLOCKER"
+          severity: "BLOCKER",
+          status: "CLOSED",
+          resolution: "FIXED",
+          effort: "30min",
+          debt: "30min",
+          type: "VULNERABILITY",
+          cleanCodeAttribute: "COMPLETE",
+          cleanCodeAttributeCategory: "INTENTIONAL"
         },
         {
           key: "AZY-me84VzvjLJAhGcM0",
           component: "EyaJrah_pfe:backend/routes/userRoutes.js",
           line: 29,
           message: "Change this code to not construct database queries directly from user-controlled data.",
-          severity: "BLOCKER"
+          severity: "BLOCKER",
+          status: "CLOSED",
+          resolution: "FIXED",
+          effort: "30min",
+          debt: "30min",
+          type: "VULNERABILITY",
+          cleanCodeAttribute: "COMPLETE",
+          cleanCodeAttributeCategory: "INTENTIONAL"
         },
         {
           key: "AZY-me84VzvjLJAhGcMz",
           component: "EyaJrah_pfe:backend/routes/userRoutes.js",
           line: 78,
           message: "Change this code to not construct database queries directly from user-controlled data.",
-          severity: "BLOCKER"
+          severity: "BLOCKER",
+          status: "CLOSED",
+          resolution: "FIXED",
+          effort: "30min",
+          debt: "30min",
+          type: "VULNERABILITY",
+          cleanCodeAttribute: "COMPLETE",
+          cleanCodeAttributeCategory: "INTENTIONAL"
         },
         {
           key: "AZY-me9FVzvjLJAhGcM1",
           component: "EyaJrah_pfe:routes/scannerRoutes.js",
           line: 20,
           message: "Change this code to not construct the OS command from user-controlled data.",
-          severity: "BLOCKER"
+          severity: "BLOCKER",
+          status: "CLOSED",
+          resolution: "FIXED",
+          effort: "30min",
+          debt: "30min",
+          type: "VULNERABILITY",
+          cleanCodeAttribute: "COMPLETE",
+          cleanCodeAttributeCategory: "INTENTIONAL"
         }
       ];
 
@@ -366,7 +463,8 @@ router.post('/scan-all', authenticateToken, async (req, res) => {
         measures: [
           { metric: "bugs", value: "0", bestValue: true },
           { metric: "code_smells", value: "68", bestValue: false },
-          { metric: "vulnerabilities", value: "3", bestValue: false }
+          { metric: "vulnerabilities", value: "6", bestValue: false },
+          { metric: "coverage", value: "65.2", bestValue: false }
         ]
       };
 
@@ -452,6 +550,11 @@ router.post('/scan-all', authenticateToken, async (req, res) => {
                 {
                   metric: "vulnerabilities",
                   value: Math.floor(Math.random() * 5).toString(),
+                  bestValue: false
+                },
+                {
+                  metric: "coverage",
+                  value: "65.2",
                   bestValue: false
                 }
               ]

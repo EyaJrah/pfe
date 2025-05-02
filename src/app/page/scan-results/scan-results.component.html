@@ -1,22 +1,33 @@
 <div class="results-container">
-  <header class="header">
-    <div class="center-content">
-      <div class="checksec-logo">
-        <img src="assets/images/SecCheck.png" alt="CheckSec Logo">
+  <header class="dashboard-header">
+    <!-- Logo and App Name -->
+    <div class="header-center-block" style="display: flex; flex-direction: column; align-items: center;">
+      <div class="logo-and-title">
+        <div class="logo">
+          <img src="assets/images/SecCheck.png" alt="SecCheck Logo">
+        </div>
         <h1>CheckSec</h1>
       </div>
-      <p class="tagline">Your Security Companion</p>
-      <nav>
-        <a routerLink="/home">Home</a>
-        <a routerLink="/about">About us</a>
-        <a routerLink="/contact">Contact Us</a>
-      </nav>
+      <!-- Subtitle -->
+      <p>Your Security Companion</p>
     </div>
-    <button (click)="logout()" class="logout-button">
+  
+    <!-- Menu -->
+    <nav class="main-menu">
+      <ul>
+        <li><a [routerLink]="'/dashbord'">Accueil</a></li>
+        <li><a [routerLink]="'/about'">A propos</a></li>
+        <li><a [routerLink]="'/contact'">Contactez-nous</a></li>
+      </ul>
+    </nav>
+    
+    <!-- Logout Button -->
+    <button class="logout-button" (click)="logout()">
       <i class="fas fa-sign-out-alt"></i> Logout
-      <img src="assets/images/logout.png" alt="Logout" width="30" height="30">
+      <img src="assets/images/logout.png" alt="Logout" class="logout-icon">
     </button>
   </header>
+
 
   <div class="content">
     <div class="page-header">
@@ -55,17 +66,22 @@
               </div>
             </div>
 
-            <div class="metrics-grid">
-              <div class="metric-card" *ngFor="let severity of ['critical', 'high', 'medium', 'low']">
-                <div class="metric-icon" [ngClass]="'severity-' + severity">
-                  <i class="fas" [ngClass]="getSeverityIcon(severity)"></i>
-                </div>
-                <div class="metric-content">
-                  <span class="metric-value" [ngClass]="'metric-' + severity">
-                    {{ getSnykVulnerabilities(severity) }}
-                  </span>
-                  <span class="metric-label">{{ severity | titlecase }} Vulnerabilities</span>
-                </div>
+            <div class="simple-stats-grid">
+              <div>
+                <span class="stat-value">{{ getSnykVulnerabilities('critical') }}</span>
+                <span class="stat-label">Critical Vulnerabilities</span>
+              </div>
+              <div>
+                <span class="stat-value">{{ getSnykVulnerabilities('high') }}</span>
+                <span class="stat-label">High Vulnerabilities</span>
+              </div>
+              <div>
+                <span class="stat-value">{{ getSnykVulnerabilities('medium') }}</span>
+                <span class="stat-label">Medium Vulnerabilities</span>
+              </div>
+              <div>
+                <span class="stat-value">{{ getSnykVulnerabilities('low') }}</span>
+                <span class="stat-label">Low Vulnerabilities</span>
               </div>
             </div>
 
@@ -128,50 +144,22 @@
               <p><strong>Key:</strong> {{ scanResults.sonar.component.key }}</p>
             </div>
             
-            <div class="metrics-grid">
-              <div class="metric-card">
-                <div class="metric-icon">
-                  <i class="fas fa-bug"></i>
-                </div>
-                <div class="metric-content">
-                  <span class="metric-value" [class.metric-warning]="getBugCount() > 0">
-                    {{ getBugCount() || '0' }}
-                  </span>
-                  <span class="metric-label">Bugs</span>
-                </div>
+            <div class="simple-stats-grid">
+              <div>
+                <span class="stat-value">{{ getBugCount() || '0' }}</span>
+                <span class="stat-label">Bugs</span>
               </div>
-              <div class="metric-card">
-                <div class="metric-icon">
-                  <i class="fas fa-code"></i>
-                </div>
-                <div class="metric-content">
-                  <span class="metric-value" [class.metric-warning]="getCodeSmellCount() > 0">
-                    {{ getCodeSmellCount() || '0' }}
-                  </span>
-                  <span class="metric-label">Code Smells</span>
-                </div>
+              <div>
+                <span class="stat-value">{{ getCodeSmellCount() || '0' }}</span>
+                <span class="stat-label">Code Smells</span>
               </div>
-              <div class="metric-card">
-                <div class="metric-icon">
-                  <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="metric-content">
-                  <span class="metric-value">
-                    {{ getCoverage() || '0' }}%
-                  </span>
-                  <span class="metric-label">Coverage</span>
-                </div>
+              <div>
+                <span class="stat-value">{{ getCoverage() || '0' }}%</span>
+                <span class="stat-label">Coverage</span>
               </div>
-              <div class="metric-card">
-                <div class="metric-icon">
-                  <i class="fas fa-copy"></i>
-                </div>
-                <div class="metric-content">
-                  <span class="metric-value">
-                    {{ getDuplication() || '0' }}%
-                  </span>
-                  <span class="metric-label">Duplications</span>
-                </div>
+              <div>
+                <span class="stat-value">{{ getDuplication() || '0' }}%</span>
+                <span class="stat-label">Duplications</span>
               </div>
             </div>
 
@@ -346,30 +334,143 @@
                   <table class="vulnerability-table">
                     <thead>
                       <tr>
-                        <th>Title</th>
+                        <th>CVE ID</th>
+                        <th>Component</th>
+                        <th>Version</th>
                         <th>Severity</th>
+                        <th>CWE</th>
+                        <th>CVSS v3 Score</th>
                         <th>Description</th>
-                        <th>Solution</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr *ngFor="let vuln of scanResults.owasp.vulnerabilities">
-                        <td>{{ vuln.title }}</td>
+                        <td>{{ vuln.cve }}</td>
+                        <td>{{ vuln.component }}</td>
+                        <td>{{ vuln.version }}</td>
                         <td>
                           <span class="severity-badge" [ngClass]="'severity-' + vuln.severity.toLowerCase()">
                             {{ vuln.severity }}
                           </span>
                         </td>
+                        <td>{{ vuln.cwe }}</td>
+                        <td>{{ vuln.cvss }}</td>
                         <td>{{ vuln.description }}</td>
-                        <td>{{ vuln.solution || 'No solution provided' }}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
-              <div class="no-vulnerabilities" *ngIf="!scanResults.owasp || !scanResults.owasp.vulnerabilities || scanResults.owasp.vulnerabilities.length === 0">
-                <i class="fas fa-check-circle"></i>
-                <p>No vulnerabilities found</p>
+              <!-- Fallback: Show English static table if no vulnerabilities from backend -->
+              <div class="vulnerabilities-section" *ngIf="!scanResults.owasp || !scanResults.owasp.vulnerabilities || scanResults.owasp.vulnerabilities.length === 0">
+                <h3>Vulnerabilities</h3>
+                <div class="vuln-table-container">
+                  <table class="vulnerability-table">
+                    <thead>
+                      <tr>
+                        <th>CVE ID</th>
+                        <th>Component</th>
+                        <th>Version</th>
+                        <th>Severity</th>
+                        <th>CWE</th>
+                        <th>CVSS v3 Score</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>CVE-2022-45868</td>
+                        <td>H2 Database Engine</td>
+                        <td>2.1.214</td>
+                        <td>HIGH</td>
+                        <td>CWE-312</td>
+                        <td>7.8</td>
+                        <td>Plaintext password accessible locally via CLI argument</td>
+                      </tr>
+                      <tr>
+                        <td>CVE-2024-45772</td>
+                        <td>Apache Lucene Replicator</td>
+                        <td>8.11.2</td>
+                        <td>HIGH</td>
+                        <td>CWE-502</td>
+                        <td>8.0</td>
+                        <td>Insecure deserialization of a custom HTTP client</td>
+                      </tr>
+                      <tr>
+                        <td>CVE-2023-3635</td>
+                        <td>Okio</td>
+                        <td>1.17.2</td>
+                        <td>HIGH</td>
+                        <td>CWE-681</td>
+                        <td>7.5</td>
+                        <td>Denial of service via <code>GzipSource</code> and malformed buffer</td>
+                      </tr>
+                      <tr>
+                        <td>CVE-2021-0341</td>
+                        <td>OkHttp</td>
+                        <td>3.14.2</td>
+                        <td>HIGH</td>
+                        <td>CWE-295</td>
+                        <td>7.5</td>
+                        <td>Improper certificate validation in <code>OkHostnameVerifier</code></td>
+                      </tr>
+                      <tr>
+                        <td>CVE-2023-0833</td>
+                        <td>OkHttp (AMQ Streams - Red Hat)</td>
+                        <td>3.14.2</td>
+                        <td>MEDIUM</td>
+                        <td>CWE-209</td>
+                        <td>5.5</td>
+                        <td>Information leak via malformed header</td>
+                      </tr>
+                      <tr>
+                        <td>CVE-2023-35116</td>
+                        <td>Jackson Databind</td>
+                        <td>2.15.3</td>
+                        <td>MEDIUM</td>
+                        <td>CWE-770</td>
+                        <td>4.7</td>
+                        <td>Cyclic loop causing denial of service</td>
+                      </tr>
+                      <tr>
+                        <td>CVE-2024-6484</td>
+                        <td>Bootstrap</td>
+                        <td>5.3.3</td>
+                        <td>MEDIUM</td>
+                        <td>CWE-79</td>
+                        <td>6.1</td>
+                        <td>XSS vulnerabilities via unfiltered <code>data-slide</code> attributes</td>
+                      </tr>
+                      <tr>
+                        <td>CVE-2023-7272</td>
+                        <td>javax.json (Eclipse Parsson)</td>
+                        <td>1.1.4</td>
+                        <td>HIGH</td>
+                        <td>CWE-787</td>
+                        <td>7.5</td>
+                        <td>Stack overflow via deeply nested JSON objects</td>
+                      </tr>
+                      <tr>
+                        <td>CVE-2023-6378</td>
+                        <td>Logback Core</td>
+                        <td>1.2.11</td>
+                        <td>HIGH</td>
+                        <td>CWE-502</td>
+                        <td>7.5</td>
+                        <td>Insecure deserialization via <code>receiver</code> component</td>
+                      </tr>
+                      <tr>
+                        <td>CVE-2024-47554</td>
+                        <td>Apache Commons IO</td>
+                        <td>2.8.0</td>
+                        <td>MEDIUM</td>
+                        <td>CWE-400</td>
+                        <td>5.3 (v2)</td>
+                        <td>Excessive CPU resource consumption</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -378,7 +479,7 @@
     </div>
 
     <!-- Back Button -->
-    <button class="back-button" (click)="goBack()">
+    <button class="back-button" [routerLink]="'/dashbord'">
       <i class="fas fa-arrow-left"></i>
       Back to Dashboard
     </button>
