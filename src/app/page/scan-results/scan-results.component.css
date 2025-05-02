@@ -1,26 +1,98 @@
+.results-container {
+  padding: 0;
+  width: 100%;
+  margin: 0;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 0;
+  width: 100%;
+  background: #2c3e50;
+  padding: 25px 40px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header h1 {
+  color: #fff;
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-align: center;
+}
 /* Base Styles */
 :host {
   display: block;
   min-height: 100vh;
   background-color: #f5f7fa;
+  box-sizing: border-box; 
 }
 
-.results-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
+
 
 /* Header Styles */
 .header {
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  text-align: center;
   margin-bottom: 30px;
-  border-radius: 8px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  padding: 20px;
+  background-color: #2c3e50;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.logo-and-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.logo img {
+  width: 50px;
+  height: auto;
+}
+
+.logo-and-title h1 {
+  font-size: 2rem;
+  color: #ffffff;
+  margin: 0;
+}
+
+.dashboard-header p {
+  color: #b3c5d7;
+  margin: 0 0 15px 0;
+}
+
+.main-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.main-menu ul li a {
+  text-decoration: none;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 500;
+  padding: 10px 15px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.main-menu ul li a:hover {
+  background-color: #34495e;
+  color: #ffffff;
 }
 
 .center-content {
@@ -71,23 +143,33 @@ nav a:hover {
 }
 
 .logout-button {
+  background-color: #2c3e50;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
   position: absolute;
   right: 20px;
   top: 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.logout-button i {
+  font-size: 1.1em;
+}
+
+.logout-button .logout-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .logout-button:hover {
-  background-color: #c0392b;
+  background-color: #1a2836;
 }
 
 /* Content Styles */
@@ -251,8 +333,10 @@ nav a:hover {
 }
 
 .stat-label {
-  color: #7f8c8d;
-  font-size: 14px;
+  display: block;
+  font-size: 1rem;
+  color: #b0b0b0;
+  text-align: center;
 }
 
 /* Tool Results Grid */
@@ -325,6 +409,10 @@ nav a:hover {
 
 .summary-card {
   padding: 20px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 /* Metrics Grid */
@@ -372,8 +460,8 @@ nav a:hover {
 
 .metric-label {
   display: block;
-  font-size: 14px;
-  color: #6c757d;
+  font-size: 1rem;
+  color: #b0b0b0;
 }
 
 /* Details Toggle */
@@ -483,7 +571,7 @@ nav a:hover {
   display: flex;
   align-items: center;
   gap: 10px;
-  background-color: #3498db;
+  background-color: #2c3e50;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -494,7 +582,7 @@ nav a:hover {
 }
 
 .back-button:hover {
-  background-color: #2980b9;
+  background-color: #1a2836;
 }
 
 /* Responsive Design */
@@ -617,12 +705,23 @@ nav a:hover {
 
 /* Styles pour l'en-tête du dashboard */
 .dashboard-header {
+  width: 100vw;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  left: 0;
+  right: 0;
+  position: relative;
   background-color: #2c3e50;
-  color: white;
-  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px 0;
+}
+
+.dashboard-header-content {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
 }
 
 .logo-and-title {
@@ -852,4 +951,61 @@ nav a:hover {
 
 .metric-low {
   color: #40c057;
+}
+
+.simple-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1.5rem;
+  margin-bottom: 1rem;
+  align-items: start;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 1rem;
+  color: #b0b0b0;
+  text-align: center;
+}
+
+.dashboard-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.main-menu {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.main-menu ul {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.dashboard-header-center .title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.dashboard-header-center .title p {
+  text-align: center;
+  margin: 0;
 } 
