@@ -61,26 +61,35 @@ jobs:
           echo "sonar.javascript.lcov.reportPaths=coverage/lcov.info" >> sonar-project.properties
       - name: Create SonarCloud project if not exists (auto)
         run: |
+          set -x
           if [ ! -f sonar-project.properties ]; then
             echo "Fichier sonar-project.properties introuvable !"
             exit 1
           fi
-          PROJECT_KEY=$(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2)
+          PROJECT_KEY=$(grep '^sonar.projectKey=' sonar-project.properties | head -n1 | cut -d'=' -f2 | tr -d '[:space:]')
           if [ -z "$PROJECT_KEY" ]; then
             echo "Clé sonar.projectKey introuvable dans sonar-project.properties !"
             exit 1
           fi
           ORG_KEY=$(grep '^sonar.organization=' sonar-project.properties | head -n1 | cut -d'=' -f2 | tr -d '[:space:]')
+          PROJECT_NAME=$(grep '^sonar.projectName=' sonar-project.properties | head -n1 | cut -d'=' -f2 | tr -d '[:space:]')
+          echo "PROJECT_KEY=$PROJECT_KEY"
           echo "ORG_KEY=$ORG_KEY"
-          PROJECT_NAME=$(grep '^sonar.projectName=' sonar-project.properties | cut -d'=' -f2)
+          echo "PROJECT_NAME=$PROJECT_NAME"
           EXISTS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/projects/search?projects=$PROJECT_KEY" | grep -c "\"key\":\"$PROJECT_KEY\"")
+          echo "EXISTS=$EXISTS"
           if [ "$EXISTS" -eq 0 ]; then
             echo "Project does not exist, creating..."
-            curl -X POST "https://sonarcloud.io/api/projects/create" \
+            RESPONSE=$(curl -s -w "%{http_code}" -o response.txt -X POST "https://sonarcloud.io/api/projects/create" \
               -u "${{ secrets.SONAR_TOKEN }}:" \
               -d "name=$PROJECT_NAME" \
               -d "project=$PROJECT_KEY" \
-              -d "organization=$ORG_KEY"
+              -d "organization=$ORG_KEY")
+            cat response.txt
+            if [ "$RESPONSE" -ne 200 ]; then
+              echo "Erreur lors de la création du projet SonarCloud (HTTP $RESPONSE)"
+              exit 1
+            fi
           else
             echo "Project already exists."
           fi
