@@ -42,6 +42,23 @@ jobs:
             exit 1
           fi
         
+      - name: Create SonarCloud project if not exists (auto)
+        run: |
+          PROJECT_KEY=$(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2)
+          ORG_KEY=$(grep '^sonar.organization=' sonar-project.properties | cut -d'=' -f2)
+          PROJECT_NAME=$(grep '^sonar.projectName=' sonar-project.properties | cut -d'=' -f2)
+          EXISTS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/projects/search?projects=$PROJECT_KEY" | grep -c "\"key\":\"$PROJECT_KEY\"")
+          if [ "$EXISTS" -eq 0 ]; then
+            echo "Project does not exist, creating..."
+            curl -X POST "https://sonarcloud.io/api/projects/create" \
+              -u "${{ secrets.SONAR_TOKEN }}:" \
+              -d "name=$PROJECT_NAME" \
+              -d "project=$PROJECT_KEY" \
+              -d "organization=$ORG_KEY"
+          else
+            echo "Project already exists."
+          fi
+        
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
