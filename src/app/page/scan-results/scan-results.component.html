@@ -245,19 +245,20 @@
 
             <div class="details-content" *ngIf="showTrivyDetails">
               <div class="vulnerabilities-section" *ngIf="scanResults.trivy && scanResults.trivy.length > 0">
-                <h3>Vulnerabilities by Target</h3>
+                <h3>Vulnerabilities, Secrets & Licenses by Target</h3>
                 <div *ngFor="let result of scanResults.trivy">
                   <h4>{{ result.Target }}</h4>
                   <div class="vuln-table-container" *ngIf="result.Vulnerabilities && result.Vulnerabilities.length > 0">
                     <table class="vulnerability-table">
                       <thead>
                         <tr>
-                          <th>ID</th>
+                          <th>Vulnerability ID</th>
                           <th>Package</th>
                           <th>Installed Version</th>
                           <th>Fixed Version</th>
                           <th>Severity</th>
                           <th>Title</th>
+                          <th>Description</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -272,6 +273,7 @@
                             </span>
                           </td>
                           <td>{{ vuln.Title }}</td>
+                          <td>{{ vuln.Description }}</td>
                         </tr>
                       </tbody>
                     </table>
