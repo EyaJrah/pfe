@@ -48,6 +48,17 @@ jobs:
           ls -l
           echo "Contenu du fichier sonar-project.properties :"
           cat sonar-project.properties || echo "Fichier non trouvé"
+      - name: Generate sonar-project.properties
+        run: |
+          echo "sonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}" > sonar-project.properties
+          echo "sonar.organization=EyaJrah" >> sonar-project.properties
+          echo "sonar.projectName=${{ github.event.repository.name }}" >> sonar-project.properties
+          echo "sonar.projectVersion=1.0" >> sonar-project.properties
+          echo "sonar.sources=src" >> sonar-project.properties
+          echo "sonar.exclusions=**/node_modules/**,**/*.spec.ts,**/*.test.ts" >> sonar-project.properties
+          echo "sonar.test.inclusions=**/*.spec.ts,**/*.test.ts" >> sonar-project.properties
+          echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties
+          echo "sonar.javascript.lcov.reportPaths=coverage/lcov.info" >> sonar-project.properties
       - name: Create SonarCloud project if not exists (auto)
         run: |
           if [ ! -f sonar-project.properties ]; then
@@ -74,8 +85,8 @@ jobs:
           fi
         
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
