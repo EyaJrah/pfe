@@ -61,7 +61,7 @@ jobs:
           echo "sonar.javascript.lcov.reportPaths=coverage/lcov.info" >> sonar-project.properties
       - name: Create SonarCloud project if not exists (auto)
         run: |
-          set -xe
+          set -x
           if [ ! -f sonar-project.properties ]; then
             echo "Fichier sonar-project.properties introuvable !"
             exit 1
@@ -76,7 +76,9 @@ jobs:
           echo "PROJECT_KEY=$PROJECT_KEY"
           echo "ORG_KEY=$ORG_KEY"
           echo "PROJECT_NAME=$PROJECT_NAME"
+          set +e
           EXISTS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/projects/search?projects=$PROJECT_KEY" | grep -c "\"key\":\"$PROJECT_KEY\"")
+          set -e
           echo "EXISTS=$EXISTS"
           if [ "$EXISTS" -eq 0 ]; then
             echo "Project does not exist, creating..."
