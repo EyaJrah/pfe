@@ -61,7 +61,7 @@ jobs:
           echo "sonar.javascript.lcov.reportPaths=coverage/lcov.info" >> sonar-project.properties
       - name: Create SonarCloud project if not exists (auto)
         run: |
-          set -x
+          set -xe
           if [ ! -f sonar-project.properties ]; then
             echo "Fichier sonar-project.properties introuvable !"
             exit 1
@@ -85,8 +85,10 @@ jobs:
               -d "name=$PROJECT_NAME" \
               -d "project=$PROJECT_KEY" \
               -d "organization=$ORG_KEY")
+            echo "SonarCloud API response (body):"
             cat response.txt
-            if [ "$RESPONSE" -ne 200 ]; then
+            echo "SonarCloud API response (HTTP code): $RESPONSE"
+            if [ "$RESPONSE" -ne 200 ] && [ "$RESPONSE" -ne 201 ]; then
               echo "Erreur lors de la création du projet SonarCloud (HTTP $RESPONSE)"
               exit 1
             fi
