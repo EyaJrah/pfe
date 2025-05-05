@@ -70,7 +70,8 @@ jobs:
             echo "Clé sonar.projectKey introuvable dans sonar-project.properties !"
             exit 1
           fi
-          ORG_KEY=$(grep '^sonar.organization=' sonar-project.properties | cut -d'=' -f2)
+          ORG_KEY=$(grep '^sonar.organization=' sonar-project.properties | head -n1 | cut -d'=' -f2 | tr -d '[:space:]')
+          echo "ORG_KEY=$ORG_KEY"
           PROJECT_NAME=$(grep '^sonar.projectName=' sonar-project.properties | cut -d'=' -f2)
           EXISTS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/projects/search?projects=$PROJECT_KEY" | grep -c "\"key\":\"$PROJECT_KEY\"")
           if [ "$EXISTS" -eq 0 ]; then
