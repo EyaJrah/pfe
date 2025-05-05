@@ -148,30 +148,72 @@ export class ApiService {
       .pipe(catchError(this.handleError));
   }
 
+  post(endpoint: string, data: any): Observable<any> {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      return throwError(() => new Error('No authentication token found'));
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post(`${this.backendUrl}${endpoint}`, data, { 
+      headers,
+      withCredentials: true // Important pour CORS avec credentials
+    }).pipe(
+      tap(response => console.log(`POST ${endpoint} response:`, response)),
+      catchError(error => {
+        console.error(`Error in POST ${endpoint}:`, error);
+        if (error.status === 401) {
+          // Token expiré ou invalide
+          localStorage.removeItem('auth_token');
+          return throwError(() => new Error('Session expired. Please login again.'));
+        } else if (error.status === 0) {
+          // Problème de connexion
+          return throwError(() => new Error('Cannot connect to server. Please check your connection.'));
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
   // Centralized error handling
   private handleError(error: HttpErrorResponse) {
     console.error('API Error:', error);
     
-    let errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
+    let errorMessage = 'An error occurred. Please try again.';
     
     if (error.error instanceof ErrorEvent) {
-      errorMessage = `Erreur: ${error.error.message}`;
+      // Erreur côté client
+      errorMessage = `Client error: ${error.error.message}`;
     } else {
-      if (error.status === 0) {
-        errorMessage = 'Impossible de se connecter au serveur. Vérifiez votre connexion internet.';
-      } else if (error.status === 401) {
-        errorMessage = 'Session expirée. Veuillez vous reconnecter.';
-        localStorage.removeItem('auth_token');
-      } else if (error.status === 403) {
-        errorMessage = 'Accès refusé. Vous n\'avez pas les permissions nécessaires.';
-      } else if (error.status === 404) {
-        errorMessage = 'Ressource non trouvée.';
-      } else if (error.status === 500) {
-        errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
-      } else if (error.error && error.error.error) {
-        errorMessage = error.error.error;
-      } else if (error.error && error.error.errors) {
-        errorMessage = error.error.errors.map((err: any) => err.msg).join(', ');
+      // Erreur côté serveur
+      switch (error.status) {
+        case 0:
+          errorMessage = 'Cannot connect to server. Please check your connection.';
+          break;
+        case 401:
+          errorMessage = 'Session expired. Please login again.';
+          localStorage.removeItem('auth_token');
+          break;
+        case 403:
+          errorMessage = 'Access denied. You do not have the required permissions.';
+          break;
+        case 404:
+          errorMessage = 'Resource not found.';
+          break;
+        case 500:
+          errorMessage = 'Server error. Please try again later.';
+          break;
+        default:
+          if (error.error && error.error.error) {
+            errorMessage = error.error.error;
+          } else if (error.error && error.error.errors) {
+            errorMessage = error.error.errors.map((err: any) => err.msg).join(', ');
+          }
       }
     }
     

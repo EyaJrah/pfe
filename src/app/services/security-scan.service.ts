@@ -25,7 +25,7 @@ export class SecurityScanService {
   runAllScans(repositoryUrl: string): Observable<any> {
     return this.http.post(
       `${this.backendUrl}/scan-results/scan-all`,
-      { repositoryUrl },
+      { githubUrl: repositoryUrl },
       { headers: this.getAuthHeaders() }
     );
   }

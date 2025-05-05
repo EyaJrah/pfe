@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const helmet = require('helmet');
+const { authenticateSnyk } = require('./utils/scanUtils');
 
 // Load environment variables
 dotenv.config();
@@ -24,30 +25,35 @@ if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir);
 }
 
-// Configure CORS
-const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? [process.env.FRONTEND_URL] 
-  : ['http://localhost:4200', 'http://127.0.0.1:4200'];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(new Error('Not allowed by CORS'));
-    }
-    return callback(null, true);
-  },
+// Configuration CORS plus détaillée
+const corsOptions = {
+  origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   credentials: true,
-  maxAge: 86400
-}));
+  maxAge: 86400 // 24 heures
+};
 
-// Middleware for parsing JSON and urlencoded data
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors(corsOptions));
+
+// Middleware pour logger les requêtes
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// Middleware pour parser le JSON
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Authentifier Snyk au démarrage
+authenticateSnyk().then(isAuthenticated => {
+  if (isAuthenticated) {
+    console.log('Snyk authentication successful');
+  } else {
+    console.warn('Snyk authentication failed. Some features may be limited.');
+  }
+});
 
 // MongoDB connection with retry logic
 const connectDB = async () => {

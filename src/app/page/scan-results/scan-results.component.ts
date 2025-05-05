@@ -307,6 +307,9 @@ export class ScanResultsComponent implements OnInit {
       } else {
         this.error = 'No repository URL provided';
       }
+      // Force static data for testing
+      this.scanResults = this.initializeScanResults();
+      console.log('Trivy data:', this.scanResults.trivy);
     });
   }
 
@@ -561,7 +564,8 @@ export class ScanResultsComponent implements OnInit {
 
   getTrivyTotalVulnerabilities(): number {
     if (!this.scanResults.trivy?.length) return 0;
-    return this.scanResults.trivy.length;
+    // Additionner toutes les vulnérabilités de chaque cible
+    return this.scanResults.trivy.reduce((acc, curr) => acc + (curr.Vulnerabilities?.length || 0), 0);
   }
 
   getTrivyCriticalVulnerabilities(): number {
@@ -604,7 +608,8 @@ export class ScanResultsComponent implements OnInit {
 
   private getTrivyVulnerabilitiesBySeverity(severity: string): number {
     if (!this.scanResults.trivy?.length) return 0;
-    return this.scanResults.trivy.filter(vuln => vuln.Vulnerabilities.some(v => v.Severity.toLowerCase() === severity.toLowerCase())).length;
+    // Additionner toutes les vulnérabilités de chaque cible par sévérité
+    return this.scanResults.trivy.reduce((acc, curr) => acc + (curr.Vulnerabilities?.filter(v => v.Severity.toLowerCase() === severity.toLowerCase()).length || 0), 0);
   }
 
   // Toggle methods for details sections
@@ -651,5 +656,119 @@ export class ScanResultsComponent implements OnInit {
 
   getSonarIssues(): Array<{ severity: string; message: string; component: string }> {
     return this.scanResults.sonar?.issues || [];
+  }
+
+  private initializeScanResults(): ScanResults {
+    return {
+      overallScore: 0,
+      totalVulnerabilities: 6,
+      criticalIssues: 2,
+      codeQuality: 0,
+      securityScore: 0,
+      snyk: {
+        status: '',
+        ok: false,
+        summary: 'Scan completed',
+        metrics: {
+          critical: 0,
+          high: 0,
+          medium: 0,
+          low: 0
+        },
+        vulnerabilities: []
+      },
+      sonar: {
+        component: {
+          id: '',
+          name: '',
+          key: '',
+          qualifier: '',
+          measures: []
+        },
+        issues: []
+      },
+      trivy: [
+        {
+          Target: 'package-lock.json',
+          Vulnerabilities: [
+            {
+              VulnerabilityID: 'CVE-2019-10744',
+              PkgName: 'lodash',
+              InstalledVersion: '4.17.11',
+              FixedVersion: '4.17.12',
+              Severity: 'CRITICAL',
+              Title: 'nodejs-lodash: prototype pollution in defaultsDeep function leading to modifying properties',
+              Description: 'https://avd.aquasec.com/nvd/cve-2019-10744'
+            },
+            {
+              VulnerabilityID: 'CVE-2020-8203',
+              PkgName: 'lodash',
+              InstalledVersion: '4.17.11',
+              FixedVersion: '4.17.19',
+              Severity: 'HIGH',
+              Title: 'nodejs-lodash: prototype pollution in zipObjectDeep function',
+              Description: 'https://avd.aquasec.com/nvd/cve-2020-8203'
+            },
+            {
+              VulnerabilityID: 'CVE-2021-23337',
+              PkgName: 'lodash',
+              InstalledVersion: '4.17.11',
+              FixedVersion: '4.17.21',
+              Severity: 'HIGH',
+              Title: 'nodejs-lodash: command injection via template',
+              Description: 'https://avd.aquasec.com/nvd/cve-2021-23337'
+            },
+            {
+              VulnerabilityID: 'CVE-2020-28500',
+              PkgName: 'lodash',
+              InstalledVersion: '4.17.11',
+              FixedVersion: '4.17.21',
+              Severity: 'MEDIUM',
+              Title: 'nodejs-lodash: ReDoS via the toNumber, trim and trimEnd functions',
+              Description: 'https://avd.aquasec.com/nvd/cve-2020-28500'
+            }
+          ]
+        },
+        {
+          Target: 'game.js',
+          Vulnerabilities: [
+            {
+              VulnerabilityID: 'SECRET-001',
+              PkgName: 'Stripe Secret Key',
+              InstalledVersion: 'N/A',
+              FixedVersion: 'N/A',
+              Severity: 'CRITICAL',
+              Title: 'Stripe Secret Key found in game.js',
+              Description: 'game.js:105'
+            }
+          ]
+        },
+        {
+          Target: 'package-lock.json (license)',
+          Vulnerabilities: [
+            {
+              VulnerabilityID: 'LICENSE-001',
+              PkgName: 'lodash',
+              InstalledVersion: '4.17.11',
+              FixedVersion: 'N/A',
+              Severity: 'LOW',
+              Title: 'MIT License Notice',
+              Description: 'License: MIT, Classification: Notice'
+            }
+          ]
+        }
+      ],
+      owasp: {
+        status: '',
+        totalVulnerabilities: 0,
+        metrics: {
+          critical: 0,
+          high: 0,
+          medium: 0,
+          low: 0
+        },
+        vulnerabilities: []
+      }
+    };
   }
 }
