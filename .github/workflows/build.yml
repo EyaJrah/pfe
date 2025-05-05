@@ -80,18 +80,11 @@ jobs:
           echo "EXISTS=$EXISTS"
           if [ "$EXISTS" -eq 0 ]; then
             echo "Project does not exist, creating..."
-            RESPONSE=$(curl -s -w "%{http_code}" -o response.txt -X POST "https://sonarcloud.io/api/projects/create" \
+            curl -v -X POST "https://sonarcloud.io/api/projects/create" \
               -u "${{ secrets.SONAR_TOKEN }}:" \
               -d "name=$PROJECT_NAME" \
               -d "project=$PROJECT_KEY" \
-              -d "organization=$ORG_KEY")
-            echo "SonarCloud API response (body):"
-            cat response.txt
-            echo "SonarCloud API response (HTTP code): $RESPONSE"
-            if [ "$RESPONSE" -ne 200 ] && [ "$RESPONSE" -ne 201 ]; then
-              echo "Erreur lors de la création du projet SonarCloud (HTTP $RESPONSE)"
-              exit 1
-            fi
+              -d "organization=$ORG_KEY"
           else
             echo "Project already exists."
           fi
