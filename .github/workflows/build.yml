@@ -51,7 +51,7 @@ jobs:
       - name: Generate sonar-project.properties
         run: |
           echo "sonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}" > sonar-project.properties
-          echo "sonar.organization=EyaJrah" >> sonar-project.properties
+          echo "sonar.organization=eyajrah" >> sonar-project.properties
           echo "sonar.projectName=${{ github.event.repository.name }}" >> sonar-project.properties
           echo "sonar.projectVersion=1.0" >> sonar-project.properties
           echo "sonar.sources=src" >> sonar-project.properties
