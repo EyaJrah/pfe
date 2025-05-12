@@ -9,16 +9,7 @@ const scanLimiter = rateLimit({
   message: 'Too many scan requests from this IP, please try again after 15 minutes'
 });
 
-// Route to get scan count
-router.get('/count', async (req, res) => {
-  try {
-    const count = 0; // Replace with actual count from database
-    res.json({ count });
-  } catch (error) {
-    console.error('Error getting scan count:', error);
-    res.status(500).json({ error: 'Failed to get scan count' });
-  }
-});
+
 
 // Route to get SonarCloud results
 router.get('/sonarcloud/:projectKey', async (req, res) => {
