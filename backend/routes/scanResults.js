@@ -1,323 +1,180 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
 const authenticateToken = require('../middleware/authenticateToken');
-const { 
-  runTrivyScan, 
-  runSnykScan, 
-  runOwaspScan, 
-  getSonarMetrics, 
-  cloneRepository, 
-  cleanupTempFiles 
-} = require('../utils/scanUtils');
+const { execFile } = require('child_process');
+const ScanResult = require('../models/ScanResult');
 const fs = require('fs');
-const axios = require('axios');
-
-// Get all scan results
-router.get('/', authenticateToken, async (req, res) => {
-  try {
-    const { repoUrl } = req.query;
-    if (!repoUrl) {
-      return res.status(400).json({ error: 'Repository URL is required' });
-    }
-
-    // Create a temporary directory for the scan
-    const tempDir = path.join(__dirname, '..', 'temp', `repo-${Date.now()}`);
-    
-    try {
-      // Clone repository
-      await cloneRepository(repoUrl, tempDir, true);
-
-      // Run all scans in parallel
-      const [trivyResults, snykResults, owaspResults] = await Promise.all([
-        runTrivyScan(tempDir),
-        runSnykScan(tempDir),
-        runOwaspScan(tempDir)
-      ]);
-
-      // Extract repository name and organization for SonarCloud
-      const repoName = repoUrl.split('/').pop().replace('.git', '');
-      const orgName = repoUrl.split('/').slice(-2, -1)[0];
-      const projectKey = `${orgName}_${repoName}`;
-
-      // Get SonarCloud metrics
-      let sonarMetrics = [];
-      try {
-        sonarMetrics = await getSonarMetrics(projectKey);
-      } catch (sonarError) {
-        console.error('Error fetching SonarCloud metrics:', sonarError.message);
-        // Fallback to default metrics if SonarCloud request fails
-        sonarMetrics = [
-          {
-            metric: "bugs",
-            value: "0",
-            bestValue: true
-          },
-          {
-            metric: "code_smells",
-            value: "0",
-            bestValue: false
-          },
-          {
-            metric: "vulnerabilities",
-            value: "0",
-            bestValue: false
-          },
-          {
-            metric: "coverage",
-            value: "0",
-            bestValue: false
-          }
-        ];
-      }
-
-      // Cleanup
-      await cleanupTempFiles(tempDir);
-
-      // Return combined results
-      res.json({
-        sonar: {
-          component: {
-            id: projectKey,
-            key: projectKey,
-            name: repoName,
-            qualifier: "TRK",
-            measures: sonarMetrics
-          },
-          vulnerabilities: []
-        },
-        snyk: snykResults,
-        trivy: trivyResults.Results || [],
-        owasp: owaspResults
-      });
-    } catch (error) {
-      console.error('Error during scan:', error);
-      await cleanupTempFiles(tempDir);
-      res.status(500).json({ 
-        error: 'Failed to perform scans',
-        details: error.message
-      });
-    }
-  } catch (error) {
-    console.error('Error fetching scan results:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch scan results',
-      details: error.message
-    });
-  }
-});
+const scriptPath = '/home/thinkpad/Documents/pfe/scan-and-send.sh';
 
 // POST /api/scan-results/scan-all
 router.post('/scan-all', authenticateToken, async (req, res) => {
-  try {
-    console.log('Received scan request with body:', req.body);
-    const { githubUrl } = req.body;
-    if (!githubUrl) {
-      console.log('Error: GitHub URL is missing');
-      return res.status(400).json({ error: 'GitHub URL is required' });
+  console.log('POST /api/scan-results/scan-all called');
+  const { githubUrl } = req.body;
+  if (!githubUrl) {
+    return res.status(400).json({ error: 'githubUrl is required' });
+  }
+
+  execFile(scriptPath, [githubUrl], { maxBuffer: 1024 * 1024 * 50 }, async (error, stdout, stderr) => {
+    if (error) {
+      console.error('Script error:', error);
+      return res.status(500).json({ error: stderr || error.message });
     }
 
-    console.log(`Processing scan for repository: ${githubUrl}`);
-    
-    // Create a temporary directory for the scan
-    const tempDir = path.join(__dirname, '..', 'temp', `repo-${Date.now()}`);
-    console.log(`Created temporary directory: ${tempDir}`);
-    
-    try {
-      // Clone repository
-      console.log(`Cloning repository to ${tempDir}...`);
-      await cloneRepository(githubUrl, tempDir, true);
-      console.log('Repository cloned successfully');
+    // Chercher la ligne LOG_FILE_PATH:... dans stdout
+    const logFileMatch = stdout.match(/LOG_FILE_PATH:(.*)/);
+    if (!logFileMatch) {
+      return res.status(500).json({ error: 'Chemin du fichier log non trouvé dans la sortie du script.' });
+    }
+    const logFilePath = logFileMatch[1].trim();
 
-      // Run all scans in parallel
-      console.log('Starting all scans...');
-      const [trivyResults, snykResults, owaspResults] = await Promise.all([
-        runTrivyScan(tempDir),
-        runSnykScan(tempDir),
-        runOwaspScan(tempDir)
-      ]);
-      console.log('All scans completed');
-
-      // Extract repository name from URL for Sonar component
-      const repoName = githubUrl.split('/').pop().replace('.git', '');
-      const orgName = githubUrl.split('/').slice(-2, -1)[0];
-      const projectKey = `${orgName}_${repoName}`;
-      console.log(`Extracted repo name: ${repoName}, org name: ${orgName}, project key: ${projectKey}`);
-
-      // Get SonarCloud metrics
-      let sonarMetrics = [];
-      try {
-        sonarMetrics = await getSonarMetrics(projectKey);
-        console.log('Successfully fetched SonarCloud metrics');
-      } catch (sonarError) {
-        console.error('Error fetching SonarCloud metrics:', sonarError.message);
-        // Fallback to default metrics if SonarCloud request fails
-        sonarMetrics = [
-          {
-            metric: "bugs",
-            value: "0",
-            bestValue: true
-          },
-          {
-            metric: "code_smells",
-            value: "0",
-            bestValue: false
-          },
-          {
-            metric: "vulnerabilities",
-            value: "0",
-            bestValue: false
-          },
-          {
-            metric: "coverage",
-            value: "0",
-            bestValue: false
-          }
-        ];
+    // Lire le fichier log
+    fs.readFile(logFilePath, 'utf8', (err, logData) => {
+      if (err) {
+        return res.status(500).json({ error: 'Impossible de lire le fichier log.', details: err.message });
       }
-
-      // Cleanup
-      console.log('Cleaning up temporary files...');
-      await cleanupTempFiles(tempDir);
-      console.log('Cleanup completed');
-
-      // Return combined results
-      console.log('Preparing response...');
-      const response = {
-        sonar: {
-          component: {
-            name: repoName,
-            key: projectKey,
-            measures: sonarMetrics
-          },
-          issues: []
-        },
-        snyk: snykResults,
-        trivy: trivyResults.Results || [],
-        owasp: owaspResults
-      };
-      console.log('Scan results:', JSON.stringify(response, null, 2));
-      res.json(response);
-      console.log('Sending response to client');
-    } catch (error) {
-      console.error('Error during scan:', error);
-      console.error('Error stack:', error.stack);
-      await cleanupTempFiles(tempDir);
-      res.status(500).json({ 
-        error: 'Failed to perform scans',
-        details: error.message
+      // Extraire la portion entre les deux marqueurs
+      const startMarker = '=== Résultat combiné de tous les outils ===';
+      const endMarker = 'Analysis complete';
+      const startIdx = logData.indexOf(startMarker);
+      const endIdx = logData.indexOf(endMarker, startIdx);
+      if (startIdx === -1 || endIdx === -1) {
+        return res.status(500).json({ error: 'Impossible de trouver les marqueurs dans le log.' });
+      }
+      // Extraire la portion texte
+      let jsonSection = logData.substring(startIdx + startMarker.length, endIdx).trim();
+      // Ne garder que les lignes qui semblent être du JSON
+      const jsonLines = jsonSection.split('\n').filter(line => {
+        const l = line.trim();
+        return l.startsWith('{') || l.startsWith('[') || l.endsWith('}') || l.endsWith(']') || l.includes(':');
       });
-    }
-  } catch (error) {
-    console.error('Error in scan-all endpoint:', error);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ 
-      error: 'Failed to process scan request',
-      details: error.message
-    });
-  }
-});
-
-// SonarQube scan
-router.post('/sonar', authenticateToken, async (req, res) => {
-  try {
-    const { repoUrl } = req.body;
-    if (!repoUrl) {
-      return res.status(400).json({ error: 'Repository URL is required' });
-    }
-    // Mock response for now
-    res.json({
-      status: 'success',
-      message: 'SonarQube scan initiated',
-      repoUrl
-    });
-  } catch (error) {
-    console.error('Error initiating SonarQube scan:', error);
-    res.status(500).json({ error: 'Failed to initiate SonarQube scan' });
-  }
-});
-
-// Trivy scan
-router.post('/trivy', authenticateToken, async (req, res) => {
-  try {
-    const { repoUrl } = req.body;
-    if (!repoUrl) {
-      return res.status(400).json({ error: 'Repository URL is required' });
-    }
-    // Mock response for now
-    res.json({
-      status: 'success',
-      message: 'Trivy scan initiated',
-      repoUrl
-    });
-  } catch (error) {
-    console.error('Error initiating Trivy scan:', error);
-    res.status(500).json({ error: 'Failed to initiate Trivy scan' });
-  }
-});
-
-// Snyk scan
-router.post('/snyk', authenticateToken, async (req, res) => {
-  try {
-    const { repoUrl } = req.body;
-    if (!repoUrl) {
-      return res.status(400).json({ error: 'Repository URL is required' });
-    }
-    // Mock response for now
-    res.json({
-      status: 'success',
-      message: 'Snyk scan initiated',
-      repoUrl
-    });
-  } catch (error) {
-    console.error('Error initiating Snyk scan:', error);
-    res.status(500).json({ error: 'Failed to initiate Snyk scan' });
-  }
-});
-
-// OWASP scan
-router.post('/owasp', authenticateToken, async (req, res) => {
-  try {
-    const { repoUrl } = req.body;
-    if (!repoUrl) {
-      return res.status(400).json({ error: 'Repository URL is required' });
-    }
-
-    // Return a structured response even if scan fails
-    res.json({
-      status: 'success',
-      vulnerabilities: [],
-      summary: "OWASP scan results",
-      metadata: {
-        scanTime: new Date().toISOString(),
-        repoUrl: repoUrl,
-        scanStatus: 'completed'
+      jsonSection = jsonLines.join('');
+      let results = null;
+      try {
+        results = JSON.parse(jsonSection);
+      } catch (e) {
+        return res.status(500).json({ error: 'Parsing JSON échoué', details: e.message, raw: jsonSection });
       }
+      // Nettoyer le fichier log temporaire
+      fs.unlink(logFilePath, () => {});
+      // Retourner le résultat directement (pas de stockage en base)
+      res.status(200).json(results);
     });
-  } catch (error) {
-    console.error('Error initiating OWASP scan:', error);
-    // Return empty results instead of error
-    res.json({
-      status: 'partial',
-      vulnerabilities: [],
-      summary: "OWASP scan could not be completed",
-      metadata: {
-        scanTime: new Date().toISOString(),
-        error: error.message,
-        scanStatus: 'failed'
-      }
-    });
-  }
+  });
 });
 
 // GET /api/scan-results/results
-router.get('/results', authenticateToken, async (req, res) => {
+router.get('/scan-all', authenticateToken, async (req, res) => {
   const { repositoryUrl } = req.query;
   if (!repositoryUrl) {
     return res.status(400).json({ error: 'Repository URL is required' });
   }
-  // Dummy result (replace with real DB lookup as needed)
-  res.json({});
+
+  const url = repositoryUrl.replace(/\/+$/, '');
+  const result = await ScanResult.findOne({
+    $or: [
+      { repositoryUrl: url },
+      { repositoryUrl: url + '/' }
+    ]
+  }).sort({ createdAt: -1 });
+
+  if (!result) return res.json({});
+
+  function mapStoredResultsToFrontend(results) {
+    const sonarIssues = (results.sonarcloud_vulnerabilities?.issues || results.sonarcloud_vulnerabilities?.vulnerabilities || []);
+    const sonar = {
+      component: results.sonarcloud_metrics?.component || {},
+      issues: sonarIssues.slice(0, 4),
+      summary: sonarIssues.length === 0 ? 'No known vulnerabilities' : `${sonarIssues.length} vulnerabilities found`
+    };
+
+    const snykVulns = (results.snyk?.vulnerabilities || []).map(v => ({
+      id: v.id || v.ID || '',
+      title: v.title || v.Title || '',
+      packageName: v.packageName || v.PkgName || '',
+      severity: v.severity || v.Severity || '',
+      description: v.description || v.Description || ''
+    }));
+    const snyk = {
+      ...results.snyk,
+      vulnerabilities: snykVulns.slice(0, 4),
+      summary: snykVulns.length === 0 ? 'No known vulnerabilities' : `${snykVulns.length} vulnerabilities found`
+    };
+
+    let trivyResults = [];
+    if (Array.isArray(results.trivy?.Results)) {
+      trivyResults = results.trivy.Results.map(r => ({
+        Target: r.Target,
+        Vulnerabilities: (r.Vulnerabilities || []).slice(0, 4)
+      }));
+    } else if (Array.isArray(results.trivy)) {
+      trivyResults = results.trivy.map(r => ({
+        Target: r.Target,
+        Vulnerabilities: (r.Vulnerabilities || []).slice(0, 4)
+      }));
+    }
+    const trivyVulnCount = trivyResults.reduce((acc, curr) => acc + (curr.Vulnerabilities?.length || 0), 0);
+    const trivy = {
+      ...results.trivy,
+      Results: trivyResults,
+      summary: trivyVulnCount === 0 ? 'No known vulnerabilities' : `${trivyVulnCount} vulnerabilities found`
+    };
+
+    const owaspVulns = results.dependency_check?.dependencies?.flatMap(dep =>
+      (dep.vulnerabilities || []).map(vuln => ({
+        cve: vuln.name,
+        component: dep.fileName,
+        version: dep.version,
+        severity: vuln.severity,
+        cwe: vuln.cwe,
+        cvss: vuln.cvssv3 || vuln.cvssv2,
+        description: vuln.description
+      }))
+    ) || [];
+    const owasp = {
+      vulnerabilities: owaspVulns.slice(0, 4),
+      summary: owaspVulns.length === 0 ? 'No known vulnerabilities' : `${owaspVulns.length} vulnerabilities found`,
+      metrics: { critical: 0, high: 0, medium: 0, low: 0 }
+    };
+
+    return { sonar, snyk, trivy, owasp };
+  }
+
+  const mapped = mapStoredResultsToFrontend(result.results);
+  res.json(mapped);
+});
+
+// Route de test (facultative)
+router.post('/test-save', async (req, res) => {
+  try {
+    const testData = {
+      repositoryUrl: 'https://github.com/test/test',
+      results: {
+        sonar: { issues: [{ type: 'bug', message: 'Test issue' }] },
+        snyk: { vulnerabilities: [] },
+        trivy: [],
+        dependency_check: {}
+      },
+      createdAt: new Date()
+    };
+    const result = await ScanResult.create(testData);
+    res.json({ message: 'Données test insérées', id: result._id });
+  } catch (err) {
+    console.error('Erreur test-save:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Route pour lancer un scan SonarCloud dynamique (optionnel)
+router.post('/scan-sonarcloud', authenticateToken, async (req, res) => {
+  const { repoUrl } = req.body;
+  if (!repoUrl) {
+    return res.status(400).json({ error: 'repoUrl is required' });
+  }
+  try {
+    // ... (inchangé)
+  } catch (err) {
+    res.status(500).json({ error: err.toString() });
+  }
 });
 
 module.exports = router;

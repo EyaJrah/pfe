@@ -1,0 +1,7 @@
+organization=eyajrah
+projectKey=eyajrah_spring-petclinic
+serverUrl=https://sonarcloud.io
+serverVersion=8.0.0.63177
+dashboardUrl=https://sonarcloud.io/dashboard?id=eyajrah_spring-petclinic
+ceTaskId=AZa-1BkCp6GNjEXHO3zt
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZa-1BkCp6GNjEXHO3zt
