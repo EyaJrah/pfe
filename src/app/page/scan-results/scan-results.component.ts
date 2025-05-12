@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ApiService } from '../../api.service';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { SecurityScanService } from '../../services/security-scan.service';
-import { ScanService } from '../../services/scan.service';
 import { RouterModule } from '@angular/router';
+import { ScriptService } from '../../services/script.service';
 
 interface SonarMeasure {
   metric: string;
@@ -39,33 +37,6 @@ interface SnykVulnerability {
   packageName: string;
   severity: string;
   description: string;
-}
-
-interface SnykResponse {
-  vulnerabilities: any[];
-  ok: boolean;
-  dependencyCount: number;
-  summary: string;
-}
-
-interface TrivyVulnerability {
-  target: string;
-  type: string;
-  vulnerabilityId: string;
-  severity: string;
-  description: string;
-}
-
-interface TrivyResult {
-  Target: string;
-  Vulnerabilities: TrivyVulnerability[];
-}
-
-interface Vulnerability {
-  title: string;
-  severity: string;
-  description: string;
-  solution?: string;
 }
 
 interface OwaspVulnerability {
@@ -169,105 +140,14 @@ export class ScanResultsComponent implements OnInit {
     trivy: [],
     owasp: {
       status: 'pending',
-      totalVulnerabilities: 10,
+      totalVulnerabilities: 0,
       metrics: {
         critical: 0,
-        high: 6,
-        medium: 4,
+        high: 0,
+        medium: 0,
         low: 0
       },
-      vulnerabilities: [
-        {
-          cve: "CVE-2022-45868",
-          component: "H2 Database Engine",
-          version: "2.1.214",
-          severity: "HIGH",
-          cwe: "CWE-312",
-          cvss: "7.8",
-          description: "Plaintext password accessible locally via CLI argument"
-        },
-        {
-          cve: "CVE-2024-45772",
-          component: "Apache Lucene Replicator",
-          version: "8.11.2",
-          severity: "HIGH",
-          cwe: "CWE-502",
-          cvss: "8.0",
-          description: "Insecure deserialization of a custom HTTP client"
-        },
-        {
-          cve: "CVE-2023-3635",
-          component: "Okio",
-          version: "1.17.2",
-          severity: "HIGH",
-          cwe: "CWE-681",
-          cvss: "7.5",
-          description: "Denial of service via GzipSource and malformed buffer"
-        },
-        {
-          cve: "CVE-2021-0341",
-          component: "OkHttp",
-          version: "3.14.2",
-          severity: "HIGH",
-          cwe: "CWE-295",
-          cvss: "7.5",
-          description: "Improper certificate validation in OkHostnameVerifier"
-        },
-        {
-          cve: "CVE-2023-0833",
-          component: "OkHttp (AMQ Streams - Red Hat)",
-          version: "3.14.2",
-          severity: "MEDIUM",
-          cwe: "CWE-209",
-          cvss: "5.5",
-          description: "Information leak via malformed header"
-        },
-        {
-          cve: "CVE-2023-35116",
-          component: "Jackson Databind",
-          version: "2.15.3",
-          severity: "MEDIUM",
-          cwe: "CWE-770",
-          cvss: "4.7",
-          description: "Cyclic loop causing denial of service"
-        },
-        {
-          cve: "CVE-2024-6484",
-          component: "Bootstrap",
-          version: "5.3.3",
-          severity: "MEDIUM",
-          cwe: "CWE-79",
-          cvss: "6.1",
-          description: "XSS vulnerabilities via unfiltered data-slide attributes"
-        },
-        {
-          cve: "CVE-2023-7272",
-          component: "javax.json (Eclipse Parsson)",
-          version: "1.1.4",
-          severity: "HIGH",
-          cwe: "CWE-787",
-          cvss: "7.5",
-          description: "Stack overflow via deeply nested JSON objects"
-        },
-        {
-          cve: "CVE-2023-6378",
-          component: "Logback Core",
-          version: "1.2.11",
-          severity: "HIGH",
-          cwe: "CWE-502",
-          cvss: "7.5",
-          description: "Insecure deserialization via receiver component"
-        },
-        {
-          cve: "CVE-2024-47554",
-          component: "Apache Commons IO",
-          version: "2.8.0",
-          severity: "MEDIUM",
-          cwe: "CWE-400",
-          cvss: "5.3 (v2)",
-          description: "Excessive CPU resource consumption"
-        }
-      ]
+      vulnerabilities: []
     }
   };
 
@@ -277,26 +157,15 @@ export class ScanResultsComponent implements OnInit {
   showTrivyDetails = false;
   showOwaspDetails = false;
 
-  readonly fallbackOwaspVulnerabilities: OwaspVulnerability[] = [
-    { cve: "CVE-2022-45868", component: "H2 Database Engine", version: "2.1.214", severity: "HIGH", cwe: "CWE-312", cvss: "7.8", description: "Plaintext password accessible locally via CLI argument" },
-    { cve: "CVE-2024-45772", component: "Apache Lucene Replicator", version: "8.11.2", severity: "HIGH", cwe: "CWE-502", cvss: "8.0", description: "Insecure deserialization of a custom HTTP client" },
-    { cve: "CVE-2023-3635", component: "Okio", version: "1.17.2", severity: "HIGH", cwe: "CWE-681", cvss: "7.5", description: "Denial of service via GzipSource and malformed buffer" },
-    { cve: "CVE-2021-0341", component: "OkHttp", version: "3.14.2", severity: "HIGH", cwe: "CWE-295", cvss: "7.5", description: "Improper certificate validation in OkHostnameVerifier" },
-    { cve: "CVE-2023-0833", component: "OkHttp (AMQ Streams - Red Hat)", version: "3.14.2", severity: "MEDIUM", cwe: "CWE-209", cvss: "5.5", description: "Information leak via malformed header" },
-    { cve: "CVE-2023-35116", component: "Jackson Databind", version: "2.15.3", severity: "MEDIUM", cwe: "CWE-770", cvss: "4.7", description: "Cyclic loop causing denial of service" },
-    { cve: "CVE-2024-6484", component: "Bootstrap", version: "5.3.3", severity: "MEDIUM", cwe: "CWE-79", cvss: "6.1", description: "XSS vulnerabilities via unfiltered data-slide attributes" },
-    { cve: "CVE-2023-7272", component: "javax.json (Eclipse Parsson)", version: "1.1.4", severity: "HIGH", cwe: "CWE-787", cvss: "7.5", description: "Stack overflow via deeply nested JSON objects" },
-    { cve: "CVE-2023-6378", component: "Logback Core", version: "1.2.11", severity: "HIGH", cwe: "CWE-502", cvss: "7.5", description: "Insecure deserialization via receiver component" },
-    { cve: "CVE-2024-47554", component: "Apache Commons IO", version: "2.8.0", severity: "MEDIUM", cwe: "CWE-400", cvss: "5.3 (v2)", description: "Excessive CPU resource consumption" }
-  ];
+  snykVulns: any[] = [];
+  trivyVulns: any[] = [];
+  owaspVulns: any[] = [];
 
   constructor(
-    private apiService: ApiService,
     private router: Router,
     private route: ActivatedRoute,
     private http: HttpClient,
-    private securityScanService: SecurityScanService,
-    private scanService: ScanService
+    private scriptService: ScriptService
   ) {}
 
   ngOnInit(): void {
@@ -307,43 +176,24 @@ export class ScanResultsComponent implements OnInit {
       } else {
         this.error = 'No repository URL provided';
       }
-      // Force static data for testing
-      this.scanResults = this.initializeScanResults();
-      console.log('Trivy data:', this.scanResults.trivy);
     });
   }
 
   loadScanResults(): void {
     this.loading = true;
     this.error = null;
-
-    // First try to get existing results
-    this.securityScanService.getScanResults(this.repositoryUrl!).subscribe({
-      next: (data) => {
-        if (data && Object.keys(data).length > 0) {
-          this.scanResults = data;
-          this.loading = false;
-        } else {
-          // If no results exist, run new scans
-          this.runNewScans();
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching scan results:', error);
-        // If error fetching results, run new scans
-        this.runNewScans();
-      }
-    });
+    this.runNewScans();
   }
 
   runNewScans(): void {
     this.loading = true;
     this.error = null;
-
-    // Run all scans in parallel
-    this.securityScanService.runAllScans(this.repositoryUrl!).subscribe({
+    this.scriptService.runScanAndSend(this.repositoryUrl!).subscribe({
       next: (data) => {
-        this.scanResults = data;
+        this.scanResults = this.mapBackendResultsToScanResults(data);
+        this.snykVulns = data.snykVulns || [];
+        this.trivyVulns = data.trivyVulns || [];
+        this.owaspVulns = data.owaspVulns || [];
         this.loading = false;
       },
       error: (error) => {
@@ -352,6 +202,158 @@ export class ScanResultsComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  private mapBackendResultsToScanResults(data: any): ScanResults {
+    // Snyk
+    const snyk = data.snyk || {};
+    const snykVulns = Array.isArray(snyk.vulnerabilities) ? snyk.vulnerabilities : [];
+    const snykMetrics = {
+      critical: snykVulns.filter((v: any) => v.severity === 'critical').length,
+      high: snykVulns.filter((v: any) => v.severity === 'high').length,
+      medium: snykVulns.filter((v: any) => v.severity === 'medium').length,
+      low: snykVulns.filter((v: any) => v.severity === 'low').length,
+    };
+
+    // Trivy
+    let trivyResults = [];
+    if (data.trivy && Array.isArray(data.trivy.Results)) {
+      trivyResults = data.trivy.Results.map((result: any) => ({
+        Target: result.Target,
+        Vulnerabilities: Array.isArray(result.Vulnerabilities) ? result.Vulnerabilities : []
+      }));
+    } else if (Array.isArray(data.trivy)) {
+      trivyResults = data.trivy.map((result: any) => ({
+        Target: result.Target,
+        Vulnerabilities: Array.isArray(result.Vulnerabilities) ? result.Vulnerabilities : []
+      }));
+    }
+
+    // OWASP Dependency Check (corrigé)
+    const owasp = data.owasp || {};
+    const owaspVulns = Array.isArray(owasp.dependencies)
+      ? owasp.dependencies.flatMap((dep: any) =>
+          (dep.vulnerabilities || []).map((vuln: any) => ({
+            cve: vuln.name,
+            component: dep.fileName,
+            version: dep.version,
+            severity: vuln.severity,
+            cwe: vuln.cwe,
+            cvss: vuln.cvssv3 || vuln.cvssv2,
+            description: vuln.description
+          }))
+        )
+      : [];
+    const owaspMetrics = {
+      critical: owaspVulns.filter((v: any) => v.severity?.toLowerCase() === 'critical').length,
+      high: owaspVulns.filter((v: any) => v.severity?.toLowerCase() === 'high').length,
+      medium: owaspVulns.filter((v: any) => v.severity?.toLowerCase() === 'medium').length,
+      low: owaspVulns.filter((v: any) => v.severity?.toLowerCase() === 'low').length,
+    };
+
+    // SonarCloud (corrigé)
+    const sonarComponent = data.sonarcloud?.sonarcloud_metrics?.component || { id: '', key: '', name: '', qualifier: '', measures: [] };
+    const sonarIssues = data.sonarcloud?.sonarcloud_vulnerabilities?.issues || [];
+
+    // Calculs globaux
+    const totalVulns = snykVulns.length + trivyResults.reduce((acc: number, curr: any) => acc + (curr.Vulnerabilities?.length || 0), 0) + owaspVulns.length;
+    const criticalIssues = snykMetrics.critical + trivyResults.reduce((acc: number, curr: any) => acc + (curr.Vulnerabilities?.filter((v: any) => v.Severity === 'CRITICAL').length || 0), 0) + owaspMetrics.critical;
+
+    // Score amélioré avec pondération
+    const overallScore = this.calculateSonarScore({
+      snyk: snykMetrics,
+      trivy: {
+        critical: trivyResults.reduce((acc: number, curr: any) => acc + (curr.Vulnerabilities?.filter((v: any) => v.Severity === 'CRITICAL').length || 0), 0),
+        high: trivyResults.reduce((acc: number, curr: any) => acc + (curr.Vulnerabilities?.filter((v: any) => v.Severity === 'HIGH').length || 0), 0),
+        medium: trivyResults.reduce((acc: number, curr: any) => acc + (curr.Vulnerabilities?.filter((v: any) => v.Severity === 'MEDIUM').length || 0), 0),
+        low: trivyResults.reduce((acc: number, curr: any) => acc + (curr.Vulnerabilities?.filter((v: any) => v.Severity === 'LOW').length || 0), 0),
+      },
+      owasp: owaspMetrics,
+      sonar: this.getSonarMetrics()
+    });
+
+    return {
+      overallScore,
+      totalVulnerabilities: totalVulns,
+      criticalIssues,
+      codeQuality: this.calculateCodeQuality(sonarComponent.measures),
+      securityScore: overallScore,
+      snyk: {
+        status: snyk.status || '',
+        ok: snyk.ok !== undefined ? snyk.ok : snykVulns.length === 0,
+        summary: typeof snyk.summary === 'string' ? snyk.summary : '',
+        metrics: snykMetrics,
+        vulnerabilities: snykVulns
+      },
+      sonar: {
+        component: sonarComponent,
+        issues: sonarIssues
+      },
+      trivy: trivyResults,
+      owasp: {
+        status: owasp.status || '',
+        totalVulnerabilities: owaspVulns.length,
+        metrics: {
+          critical: owaspVulns.filter((v: any) => v.severity?.toLowerCase() === 'critical').length,
+          high: owaspVulns.filter((v: any) => v.severity?.toLowerCase() === 'high').length,
+          medium: owaspVulns.filter((v: any) => v.severity?.toLowerCase() === 'medium').length,
+          low: owaspVulns.filter((v: any) => v.severity?.toLowerCase() === 'low').length,
+        },
+        vulnerabilities: owaspVulns
+      }
+    };
+  }
+
+ 
+
+  private calculateCodeQuality(measures: any[]): number {
+    if (!measures || measures.length === 0) return 0;
+
+    const metrics = {
+      bugs: this.getMetricValue(measures, 'bugs'),
+      codeSmells: this.getMetricValue(measures, 'code_smells'),
+      coverage: this.getMetricValue(measures, 'coverage'),
+      duplications: this.getMetricValue(measures, 'duplicated_lines_density')
+    };
+
+    // Pondération des métriques
+    const weights = {
+      bugs: 0.3,
+      codeSmells: 0.2,
+      coverage: 0.3,
+      duplications: 0.2
+    };
+
+    // Calcul du score
+    const score = (
+      (Math.max(0, 100 - metrics.bugs * 10) * weights.bugs) +
+      (Math.max(0, 100 - metrics.codeSmells * 5) * weights.codeSmells) +
+      (metrics.coverage * weights.coverage) +
+      (Math.max(0, 100 - metrics.duplications) * weights.duplications)
+    );
+
+    return Math.round(score);
+  }
+
+  private getMetricValue(measures: any[], metricKey: string): number {
+    const measure = measures.find(m => m.metric === metricKey);
+    return measure ? parseFloat(measure.value) : 0;
+  }
+
+  private calculateSonarScore(metrics: any): number {
+    const weights = {
+      bugs: 0.4,
+      codeSmells: 0.3,
+      coverage: 0.2,
+      duplications: 0.1
+    };
+
+    return (
+      (Math.max(0, 100 - metrics.bugs * 10) * weights.bugs) +
+      (Math.max(0, 100 - metrics.codeSmells * 5) * weights.codeSmells) +
+      (metrics.coverage * weights.coverage) +
+      (Math.max(0, 100 - metrics.duplications) * weights.duplications)
+    );
   }
 
   getTrivyVulnerabilities(severity: string): number {
@@ -387,36 +389,23 @@ export class ScanResultsComponent implements OnInit {
   }
 
   getBugCount(): number {
-    return this.getMetricValue('bugs');
+    const metrics = this.scanResults.sonar?.component?.measures;
+    return metrics ? this.getMetricValue(metrics, 'bugs') : 0;
   }
 
   getCodeSmellCount(): number {
-    return this.getMetricValue('code_smells');
+    const metrics = this.scanResults.sonar?.component?.measures;
+    return metrics ? this.getMetricValue(metrics, 'code_smells') : 0;
   }
 
   getCoverage(): number {
-    return this.getMetricValue('coverage');
+    const metrics = this.scanResults.sonar?.component?.measures;
+    return metrics ? this.getMetricValue(metrics, 'coverage') : 0;
   }
 
   getDuplication(): number {
-    return this.getMetricValue('duplicated_lines_density');
-  }
-
-  getSecurityHotspots(): number {
-    return this.getMetricValue('security_hotspots');
-  }
-
-  getTechnicalDebt(): number {
-    const debt = this.getMetricValue('sqale_index');
-    return debt ? Math.round(debt / (8 * 60)) : 0; // Convert minutes to days
-  }
-
-  private getMetricValue(metricKey: string): number {
-    const metrics = this.scanResults.sonar?.component.measures;
-    if (!metrics) return 0;
-    
-    const measure = metrics.find(m => m.metric === metricKey);
-    return measure ? parseFloat(measure.value) : 0;
+    const metrics = this.scanResults.sonar?.component?.measures;
+    return metrics ? this.getMetricValue(metrics, 'duplicated_lines_density') : 0;
   }
 
   logout(): void {
@@ -432,19 +421,12 @@ export class ScanResultsComponent implements OnInit {
     this.runNewScans();
   }
 
-  getOwaspVulnerabilityArray() {
-    if (this.scanResults.owasp?.vulnerabilities && this.scanResults.owasp.vulnerabilities.length > 0) {
-      return this.scanResults.owasp.vulnerabilities;
-    }
-    return this.fallbackOwaspVulnerabilities;
-  }
-
   getTotalOwaspVulnerabilities(): number {
-    return this.getOwaspVulnerabilityArray().length;
+    return this.scanResults.owasp.vulnerabilities.length;
   }
 
   getOwaspVulnerabilities(severity: string): number {
-    return this.getOwaspVulnerabilityArray().filter(
+    return this.scanResults.owasp.vulnerabilities.filter(
       vuln => vuln.severity.toLowerCase() === severity.toLowerCase()
     ).length;
   }
@@ -534,9 +516,9 @@ export class ScanResultsComponent implements OnInit {
     if (!this.scanResults.sonar?.component.measures) return 0;
     
     const metrics = this.scanResults.sonar.component.measures;
-    const reliability = this.getMetricValue('bugs');
-    const security = this.getMetricValue('code_smells');
-    const maintainability = this.getMetricValue('coverage');
+    const reliability = this.getMetricValue(metrics, 'bugs');
+    const security = this.getMetricValue(metrics, 'code_smells');
+    const maintainability = this.getMetricValue(metrics, 'coverage');
     
     // Convert metrics to scores (higher is better)
     const reliabilityScore = Math.max(0, 100 - (reliability * 10));
@@ -608,8 +590,17 @@ export class ScanResultsComponent implements OnInit {
 
   private getTrivyVulnerabilitiesBySeverity(severity: string): number {
     if (!this.scanResults.trivy?.length) return 0;
-    // Additionner toutes les vulnérabilités de chaque cible par sévérité
-    return this.scanResults.trivy.reduce((acc, curr) => acc + (curr.Vulnerabilities?.filter(v => v.Severity.toLowerCase() === severity.toLowerCase()).length || 0), 0);
+    // Correction : on vérifie que v.Severity existe avant d'appeler .toLowerCase()
+    return this.scanResults.trivy.reduce(
+      (acc, curr) =>
+        acc +
+        (curr.Vulnerabilities
+          ? curr.Vulnerabilities.filter(
+              v => v.Severity && v.Severity.toLowerCase() === severity.toLowerCase()
+            ).length
+          : 0),
+      0
+    );
   }
 
   // Toggle methods for details sections
@@ -617,158 +608,40 @@ export class ScanResultsComponent implements OnInit {
     this.showOwaspDetails = !this.showOwaspDetails;
   }
 
-  getVulnerabilityCount(severity: string): number {
-    let count = 0;
-
-    // Count Snyk vulnerabilities
-    if (this.scanResults.snyk?.vulnerabilities) {
-      count += this.scanResults.snyk.vulnerabilities.filter(
-        (vuln) => vuln.severity.toLowerCase() === severity.toLowerCase()
-      ).length;
+  getSonarMetrics(): any {
+    if (!this.scanResults?.sonar?.component?.measures) {
+      return {
+        bugs: 0,
+        codeSmells: 0,
+        coverage: 0,
+        duplications: 0
+      };
     }
-
-    // Count Trivy vulnerabilities
-    if (this.scanResults.trivy?.length) {
-      count += this.scanResults.trivy.filter(vuln => vuln.Vulnerabilities.some(v => v.Severity.toLowerCase() === severity.toLowerCase())).length;
-    }
-
-    // Count OWASP vulnerabilities
-    if (this.scanResults.owasp?.vulnerabilities) {
-      count += this.scanResults.owasp.vulnerabilities.filter(
-        (vuln) => vuln.severity.toLowerCase() === severity.toLowerCase()
-      ).length;
-    }
-
-    return count;
+    
+    const metrics = this.scanResults.sonar.component.measures;
+    return {
+      bugs: this.getMetricValue(metrics, 'bugs'),
+      codeSmells: this.getMetricValue(metrics, 'code_smells'),
+      coverage: this.getMetricValue(metrics, 'coverage'),
+      duplications: this.getMetricValue(metrics, 'duplicated_lines_density')
+    };
   }
 
-  getSonarMetrics(): Array<{ name: string; value: number }> {
-    const metrics = this.scanResults.sonar?.component.measures;
-    if (!metrics) return [];
+  getSonarChartData(): any[] {
+    if (!this.scanResults?.sonar?.component?.measures) {
+      return [];
+    }
 
+    const metrics = this.scanResults.sonar.component.measures;
     return [
-      { name: 'Bugs', value: this.getMetricValue('bugs') },
-      { name: 'Code Smells', value: this.getMetricValue('code_smells') },
-      { name: 'Coverage', value: this.getMetricValue('coverage') },
-      { name: 'Duplications', value: this.getMetricValue('duplicated_lines_density') }
+      { name: 'Bugs', value: this.getMetricValue(metrics, 'bugs') },
+      { name: 'Code Smells', value: this.getMetricValue(metrics, 'code_smells') },
+      { name: 'Coverage', value: this.getMetricValue(metrics, 'coverage') },
+      { name: 'Duplications', value: this.getMetricValue(metrics, 'duplicated_lines_density') }
     ];
   }
 
   getSonarIssues(): Array<{ severity: string; message: string; component: string }> {
     return this.scanResults.sonar?.issues || [];
-  }
-
-  private initializeScanResults(): ScanResults {
-    return {
-      overallScore: 0,
-      totalVulnerabilities: 6,
-      criticalIssues: 2,
-      codeQuality: 0,
-      securityScore: 0,
-      snyk: {
-        status: '',
-        ok: false,
-        summary: 'Scan completed',
-        metrics: {
-          critical: 0,
-          high: 0,
-          medium: 0,
-          low: 0
-        },
-        vulnerabilities: []
-      },
-      sonar: {
-        component: {
-          id: '',
-          name: '',
-          key: '',
-          qualifier: '',
-          measures: []
-        },
-        issues: []
-      },
-      trivy: [
-        {
-          Target: 'package-lock.json',
-          Vulnerabilities: [
-            {
-              VulnerabilityID: 'CVE-2019-10744',
-              PkgName: 'lodash',
-              InstalledVersion: '4.17.11',
-              FixedVersion: '4.17.12',
-              Severity: 'CRITICAL',
-              Title: 'nodejs-lodash: prototype pollution in defaultsDeep function leading to modifying properties',
-              Description: 'https://avd.aquasec.com/nvd/cve-2019-10744'
-            },
-            {
-              VulnerabilityID: 'CVE-2020-8203',
-              PkgName: 'lodash',
-              InstalledVersion: '4.17.11',
-              FixedVersion: '4.17.19',
-              Severity: 'HIGH',
-              Title: 'nodejs-lodash: prototype pollution in zipObjectDeep function',
-              Description: 'https://avd.aquasec.com/nvd/cve-2020-8203'
-            },
-            {
-              VulnerabilityID: 'CVE-2021-23337',
-              PkgName: 'lodash',
-              InstalledVersion: '4.17.11',
-              FixedVersion: '4.17.21',
-              Severity: 'HIGH',
-              Title: 'nodejs-lodash: command injection via template',
-              Description: 'https://avd.aquasec.com/nvd/cve-2021-23337'
-            },
-            {
-              VulnerabilityID: 'CVE-2020-28500',
-              PkgName: 'lodash',
-              InstalledVersion: '4.17.11',
-              FixedVersion: '4.17.21',
-              Severity: 'MEDIUM',
-              Title: 'nodejs-lodash: ReDoS via the toNumber, trim and trimEnd functions',
-              Description: 'https://avd.aquasec.com/nvd/cve-2020-28500'
-            }
-          ]
-        },
-        {
-          Target: 'game.js',
-          Vulnerabilities: [
-            {
-              VulnerabilityID: 'SECRET-001',
-              PkgName: 'Stripe Secret Key',
-              InstalledVersion: 'N/A',
-              FixedVersion: 'N/A',
-              Severity: 'CRITICAL',
-              Title: 'Stripe Secret Key found in game.js',
-              Description: 'game.js:105'
-            }
-          ]
-        },
-        {
-          Target: 'package-lock.json (license)',
-          Vulnerabilities: [
-            {
-              VulnerabilityID: 'LICENSE-001',
-              PkgName: 'lodash',
-              InstalledVersion: '4.17.11',
-              FixedVersion: 'N/A',
-              Severity: 'LOW',
-              Title: 'MIT License Notice',
-              Description: 'License: MIT, Classification: Notice'
-            }
-          ]
-        }
-      ],
-      owasp: {
-        status: '',
-        totalVulnerabilities: 0,
-        metrics: {
-          critical: 0,
-          high: 0,
-          medium: 0,
-          low: 0
-        },
-        vulnerabilities: []
-      }
-    };
   }
 }

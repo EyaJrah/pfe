@@ -47,7 +47,7 @@ export class SignUpComponent {
       password: this.password,
     };
 
-    this.http.post<SignupResponse>('http://localhost:5000/api/auth/signup', userData)
+    this.http.post<SignupResponse>('http://localhost:5000/api/users/signup', userData)
       .subscribe({
         next: (response: SignupResponse) => {
           console.log('Utilisateur enregistré:', response);

@@ -5,6 +5,9 @@ const fs = require("fs").promises;
 const path = require("path");
 const axios = require("axios");
 const { validateRepositoryUrl } = require('../utils/githubUtils');
+const fsExtra = require('fs-extra');
+const simpleGit = require('simple-git');
+const { v4: uuidv4 } = require('uuid');
 
 async function runTrivyScan(repoPath) {
   try {
@@ -56,12 +59,16 @@ async function runSnykScan(repoPath) {
   try {
     console.log('Starting Snyk scan on:', repoPath);
     
-    // Authentifier Snyk avant de lancer le scan
-    const isAuthenticated = await authenticateSnyk();
-    if (!isAuthenticated) {
-      console.warn('Snyk authentication failed. Some features may be limited.');
+    // Vérifier si le token est présent
+    if (!process.env.SNYK_TOKEN) {
+      console.warn('SNYK_TOKEN not found in environment variables');
+      return { vulnerabilities: [], error: 'SNYK_TOKEN not configured', scanStatus: 'failed' };
     }
 
+    // Configurer Snyk avec le token
+    await execPromise(`snyk config set api=${process.env.SNYK_TOKEN}`);
+    console.log('Snyk configured with token');
+    
     console.log('Snyk version:', await execPromise('snyk --version'));
     
     const { stdout, stderr } = await execPromise(
@@ -256,6 +263,45 @@ async function cleanupTempFiles(tempDir) {
   }
 }
 
+async function runSonarCloudScan(repoUrl, orgKey, sonarToken) {
+  const tempDir = path.join(__dirname, '..', 'temp', uuidv4());
+  try {
+    // 1. Cloner le repo
+    await simpleGit().clone(repoUrl, tempDir);
+
+    // 2. Générer sonar-project.properties
+    const repoName = repoUrl.split('/').pop().replace('.git', '');
+    const projectKey = `${orgKey}_${repoName}`;
+    const sonarProps = `
+sonar.projectKey=${projectKey}
+sonar.organization=${orgKey}
+sonar.projectName=${repoName}
+sonar.sources=src
+sonar.sourceEncoding=UTF-8
+sonar.login=${sonarToken}
+    `.trim();
+    await fsExtra.writeFile(path.join(tempDir, 'sonar-project.properties'), sonarProps);
+
+    // 3. Lancer sonar-scanner
+    await new Promise((resolve, reject) => {
+      exec(
+        `sonar-scanner`,
+        { cwd: tempDir, maxBuffer: 1024 * 1024 * 10 },
+        (error, stdout, stderr) => {
+          if (error) return reject(stderr || stdout);
+          resolve(stdout);
+        }
+      );
+    });
+
+    // 4. (Optionnel) Récupérer les résultats SonarCloud via l'API ici
+
+    return { status: 'Scan SonarCloud terminé', projectKey };
+  } finally {
+    await fsExtra.remove(tempDir);
+  }
+}
+
 module.exports = {
   runTrivyScan,
   runSnykScan,
@@ -263,5 +309,6 @@ module.exports = {
   getSonarMetrics,
   cloneRepository,
   cleanupTempFiles,
-  authenticateSnyk
+  authenticateSnyk,
+  runSonarCloudScan
 };
