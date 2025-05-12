@@ -1,0 +1,11 @@
+{
+  "githubUrl": "https://github.com/utilisateur/projet",
+  "results": {
+    "sonarcloud": { "vulnerabilities": 3 },
+    "trivy": { "vulnerabilities": [] },
+    "snyk": { "vulnerabilities": [
+      { "id": "SNYK-123", "title": "XSS", "packageName": "example-lib", "severity": "high", "description": "Cross-site scripting" }
+    ] },
+    "dependencyCheck": { "vulnerabilities": [] }
+  }
+}

@@ -1,20 +1,23 @@
-<header class="dashboard-header">
+<div class="results-container">
+  <header class="dashboard-header">
     <!-- Logo and App Name -->
-    <div class="logo-and-title">
-      <div class="logo">
-        <img src="assets/images/SecCheck.png" alt="SecCheck Logo">
+    <div class="header-center-block" style="display: flex; flex-direction: column; align-items: center;">
+      <div class="logo-and-title">
+        <div class="logo">
+          <img src="assets/images/SecCheck.png" alt="SecCheck Logo">
+        </div>
+        <h1>CheckSec</h1>
       </div>
-      <h1>CheckSec</h1>
+      <!-- Subtitle -->
+      <p>Your Security Companion</p>
     </div>
-    <!-- Subtitle -->
-    <p>Your Security Companion</p>
   
     <!-- Menu -->
     <nav class="main-menu">
       <ul>
-        <li><a routerLink="/dashbord">Home</a></li>
-        <li><a routerLink="/about">About us</a></li>
-        <li><a routerLink="/contact">Contact Us</a></li>
+        <li><a [routerLink]="'/dashbord'">Accueil</a></li>
+        <li><a [routerLink]="'/about'">A propos</a></li>
+        <li><a [routerLink]="'/contact'">Contactez-nous</a></li>
       </ul>
     </nav>
     
@@ -23,72 +26,305 @@
       <i class="fas fa-sign-out-alt"></i> Logout
       <img src="assets/images/logout.png" alt="Logout" class="logout-icon">
     </button>
-</header>
+  </header>
 
-<div class="scan-info">
-    <h2>Scan Results</h2>
-    <p class="repo-url">Repository: {{ repositoryUrl }}</p>
+
+  <div class="content">
+    <div class="page-header">
+      <h1>Security Scan Results</h1>
+      <p class="repo-url">Repository: {{ repositoryUrl }}</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Analyzing repository...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+      <button *ngIf="repositoryUrl" (click)="retryScans()" class="retry-button">
+        Retry Scan
+      </button>
+    </div>
+
+    <!-- Results Content -->
+    <div *ngIf="!loading && !error" class="results-content">
+      <!-- Tool Results -->
+      <div class="tool-results-grid">
+        <!-- Snyk Results -->
+        <section class="tool-section">
+          <div class="tool-header">
+            <img src="assets/images/snyk.png" alt="Snyk Logo" class="tool-logo">
+            <h2>Snyk Security Analysis</h2>
+          </div>
+          <div class="summary-card">
+            <div class="simple-stats-grid">
+              <div>
+                <span class="stat-value">{{ getSnykVulnerabilities('critical') }}</span>
+                <span class="stat-label">Critical Vulnerabilities</span>
+              </div>
+              <div>
+                <span class="stat-value">{{ getSnykVulnerabilities('high') }}</span>
+                <span class="stat-label">High Vulnerabilities</span>
+              </div>
+              <div>
+                <span class="stat-value">{{ getSnykVulnerabilities('medium') }}</span>
+                <span class="stat-label">Medium Vulnerabilities</span>
+              </div>
+              <div>
+                <span class="stat-value">{{ getSnykVulnerabilities('low') }}</span>
+                <span class="stat-label">Low Vulnerabilities</span>
+              </div>
+            </div>
+            <div class="details-toggle" (click)="toggleSnykDetails()">
+              <span>View Details</span>
+              <i class="fas" [class.fa-chevron-down]="!showSnykDetails" [class.fa-chevron-up]="showSnykDetails"></i>
+            </div>
+            <div class="details-content" *ngIf="showSnykDetails">
+              <div class="vulnerabilities-section">
+                <h3>Vulnerabilities</h3>
+                <div class="vuln-table-container">
+                  <table class="vulnerability-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Severity</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let vuln of snykVulns">
+                        <td>{{ vuln.id || '-' }}</td>
+                        <td>{{ vuln.severity || '-' }}</td>
+                        <td>{{ vuln.title || '-' }}</td>
+                        <td>{{ vuln.description || '-' }}</td>
+                      </tr>
+                      <tr *ngIf="!snykVulns || snykVulns.length === 0">
+                        <td colspan="4" style="text-align:center;">Aucune vulnérabilité trouvée</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SonarCloud Results -->
+        <section class="tool-section">
+          <div class="tool-header">
+            <img src="assets/images/sonarcloud.png" alt="SonarCloud Logo" class="tool-logo">
+            <h2>SonarCloud Quality Analysis</h2>
+          </div>
+          <div class="summary-card" *ngIf="scanResults.sonar?.component">
+            <div class="sonar-header">
+              <p><strong>Project:</strong> {{ scanResults.sonar.component.name }}</p>
+              <p><strong>Key:</strong> {{ scanResults.sonar.component.key }}</p>
+            </div>
+            
+            <div class="simple-stats-grid">
+              <div>
+                <span class="stat-value">{{ getBugCount() || '0' }}</span>
+                <span class="stat-label">Bugs</span>
+              </div>
+              <div>
+                <span class="stat-value">{{ getCodeSmellCount() || '0' }}</span>
+                <span class="stat-label">Code Smells</span>
+              </div>
+              <div>
+                <span class="stat-value">{{ getCoverage() || '0' }}%</span>
+                <span class="stat-label">Coverage</span>
+              </div>
+              <div>
+                <span class="stat-value">{{ getDuplication() || '0' }}%</span>
+                <span class="stat-label">Duplications</span>
+              </div>
+            </div>
+
+            <div class="details-toggle" (click)="toggleSonarDetails()">
+              <span>View Details</span>
+              <i class="fas" [class.fa-chevron-down]="!showSonarDetails" [class.fa-chevron-up]="showSonarDetails"></i>
+            </div>
+
+            <div class="details-content" *ngIf="showSonarDetails">
+              <div class="vulnerabilities-section">
+                <h3>Security Vulnerabilities</h3>
+                <div class="vuln-table-container" *ngIf="scanResults.sonar.issues && scanResults.sonar.issues.length > 0">
+                  <table class="vulnerability-table">
+                    <thead>
+                      <tr>
+                        <th>Key</th>
+                        <th>Component</th>
+                        <th>Line</th>
+                        <th>Message</th>
+                        <th>Severity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let issue of scanResults.sonar.issues">
+                        <td>{{ issue.key }}</td>
+                        <td>{{ issue.component }}</td>
+                        <td>{{ issue.line }}</td>
+                        <td>{{ issue.message }}</td>
+                        <td>
+                          <span class="severity-badge" [ngClass]="'severity-' + issue.severity.toLowerCase()">
+                            {{ issue.severity }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="no-vulnerabilities" *ngIf="!scanResults.sonar.issues || scanResults.sonar.issues.length === 0">
+                  <i class="fas fa-check-circle"></i>
+                  <p>No security vulnerabilities found</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Trivy Results -->
+        <section class="tool-section">
+          <div class="tool-header">
+            <img src="assets/images/trivy.png" alt="Trivy Logo" class="tool-logo">
+            <h2>Trivy Security Analysis</h2>
+          </div>
+          <div class="summary-card">
+            <div class="trivy-summary">
+              <div class="summary-stats">
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTrivyTotalVulnerabilities() }}</span>
+                  <span class="stat-label">Total Vulnerabilities</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTrivyCriticalVulnerabilities() }}</span>
+                  <span class="stat-label">Critical</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTrivyHighVulnerabilities() }}</span>
+                  <span class="stat-label">High</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTrivyMediumVulnerabilities() }}</span>
+                  <span class="stat-label">Medium</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTrivyLowVulnerabilities() }}</span>
+                  <span class="stat-label">Low</span>
+                </div>
+              </div>
+            </div>
+            <div class="details-toggle" (click)="toggleTrivyDetails()">
+              <span>View Details</span>
+              <i class="fas" [class.fa-chevron-down]="!showTrivyDetails" [class.fa-chevron-up]="showTrivyDetails"></i>
+            </div>
+            <div class="details-content" *ngIf="showTrivyDetails">
+              <div class="vulnerabilities-section">
+                <h3>Vulnerabilities</h3>
+                <div class="vuln-table-container">
+                  <table class="vulnerability-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Severity</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let vuln of trivyVulns">
+                        <td>{{ vuln.id || '-' }}</td>
+                        <td>{{ vuln.severity || '-' }}</td>
+                        <td>{{ vuln.title || '-' }}</td>
+                        <td>{{ vuln.description || '-' }}</td>
+                      </tr>
+                      <tr *ngIf="!trivyVulns || trivyVulns.length === 0">
+                        <td colspan="4" style="text-align:center;">Aucune vulnérabilité trouvée</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- OWASP Dependency Check Results -->
+        <section class="tool-section">
+          <div class="tool-header">
+            <img src="assets/images/depcheck.png" alt="OWASP Logo" class="tool-logo">
+            <h2>OWASP Dependency Check</h2>
+          </div>
+          <div class="summary-card">
+            <div class="owasp-summary">
+              <div class="summary-stats">
+                <div class="stat-item">
+                  <span class="stat-value">{{ getTotalOwaspVulnerabilities() }}</span>
+                  <span class="stat-label">Total Vulnerabilities</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getOwaspVulnerabilities('critical') }}</span>
+                  <span class="stat-label">Critical</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getOwaspVulnerabilities('high') }}</span>
+                  <span class="stat-label">High</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getOwaspVulnerabilities('medium') }}</span>
+                  <span class="stat-label">Medium</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ getOwaspVulnerabilities('low') }}</span>
+                  <span class="stat-label">Low</span>
+                </div>
+              </div>
+            </div>
+            <div class="details-toggle" (click)="toggleOwaspDetails()">
+              <span>View Details</span>
+              <i class="fas" [class.fa-chevron-down]="!showOwaspDetails" [class.fa-chevron-up]="showOwaspDetails"></i>
+            </div>
+            <div class="details-content" *ngIf="showOwaspDetails">
+              <div class="vulnerabilities-section">
+                <h3>Vulnerabilities</h3>
+                <div class="vuln-table-container">
+                  <table class="vulnerability-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Severity</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let vuln of owaspVulns">
+                        <td>{{ vuln.id || '-' }}</td>
+                        <td>{{ vuln.severity || '-' }}</td>
+                        <td>{{ vuln.title || '-' }}</td>
+                        <td>{{ vuln.description || '-' }}</td>
+                      </tr>
+                      <tr *ngIf="!owaspVulns || owaspVulns.length === 0">
+                        <td colspan="4" style="text-align:center;">Aucune vulnérabilité trouvée</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Back Button -->
+    <button class="back-button" [routerLink]="'/dashbord'">
+      <i class="fas fa-arrow-left"></i>
+      Back to Dashboard
+    </button>
+  </div>
 </div>
-
-<div class="results-container">
-    <div class="loading-spinner" *ngIf="isLoading">
-        <div class="spinner"></div>
-        <p>Analyzing repository...</p>
-    </div>
-
-    <div class="error-message" *ngIf="errorMessage">
-        <p>{{ errorMessage }}</p>
-    </div>
-
-    <div class="results-content" *ngIf="!isLoading">
-        <div class="filters">
-            <select class="tool-filter" (change)="onToolChange($event)">
-                <option value="all">All Tools</option>
-                <option value="sonarqube">SonarQube</option>
-                <option value="trivy">Trivy</option>
-                <option value="snyk">Snyk</option>
-                <option value="owasp">OWASP Dependency Check</option>
-            </select>
-            <select class="severity-filter" (change)="onSeverityChange($event)">
-                <option value="all">All Severities</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-                <option value="info">Info</option>
-            </select>
-        </div>
-
-        <div class="results-summary" *ngIf="scanResults.length > 0">
-            <p>Found {{ filteredResults.length }} issues ({{ scanResults.length }} total)</p>
-        </div>
-
-        <table class="results-table" *ngIf="filteredResults.length > 0">
-            <thead>
-                <tr>
-                    <th>Tool</th>
-                    <th>Severity</th>
-                    <th>Description</th>
-                    <th>Location</th>
-                    <th>Recommendation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let result of filteredResults" [ngClass]="result.severity.toLowerCase()">
-                    <td>{{ result.tool }}</td>
-                    <td>
-                        <span class="severity-badge" [ngClass]="result.severity.toLowerCase()">
-                            {{ result.severity }}
-                        </span>
-                    </td>
-                    <td>{{ result.description }}</td>
-                    <td>{{ result.location }}</td>
-                    <td>{{ result.recommendation }}</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="no-results" *ngIf="filteredResults.length === 0 && !isLoading && !errorMessage">
-            <p>No issues found matching your filters.</p>
-        </div>
-    </div>
-</div> 

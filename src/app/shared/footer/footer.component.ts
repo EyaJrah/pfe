@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
+import { NavigationService } from '../../services/navigation.service';
 
 @Component({
   selector: 'app-footer',
@@ -10,13 +11,9 @@ import { RouterModule, Router } from '@angular/router';
   styleUrls: ['./footer.component.css']
 })
 export class FooterComponent {
-  constructor(private router: Router) {}
+  constructor(private navigationService: NavigationService) {}
 
   refreshPage() {
-    // D'abord naviguer vers le dashboard
-    this.router.navigate(['/dashbord']).then(() => {
-      // Puis rafraîchir la page
-      window.location.reload();
-    });
+    this.navigationService.navigateAndReload('/dashbord');
   }
 }
