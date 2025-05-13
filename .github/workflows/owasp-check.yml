@@ -30,7 +30,8 @@ jobs:
         run: |
           VERSION="8.4.3"
           wget "https://github.com/jeremylong/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip"
-          unzip dependency-check-${VERSION}-release.zip
+          rm -rf dependency-check
+          unzip -o dependency-check-${VERSION}-release.zip
           chmod +x dependency-check/bin/dependency-check.sh
 
       - name: Run OWASP Dependency Check
