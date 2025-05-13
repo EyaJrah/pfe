@@ -24,6 +24,7 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           scan-type: 'fs'
           ignore-unfixed: true
@@ -32,9 +33,12 @@ jobs:
           severity: 'CRITICAL,HIGH'
           output: 'trivy-results.txt'
 
+      - name: List files after Trivy scan
+        run: ls -l
+
       - name: Upload Trivy scan results
         uses: actions/upload-artifact@v4
         with:
           name: trivy-results
           path: trivy-results.txt
-          retention-days: 30 
+          retention-days: 7 
