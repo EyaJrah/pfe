@@ -37,4 +37,4 @@ jobs:
         with:
           name: trivy-results
           path: trivy-results.txt
-          retention-days: 30 
+          retention-days: 7 
