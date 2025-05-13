@@ -69,7 +69,7 @@ export class LoginComponent {
             console.log('User info stored in localStorage');
           }
 
-          // Navigate to dashboard - corrected path to match the route configuration
+          // Navigate to dashboard
           console.log('Navigating to dashboard...');
           this.router.navigate(['/dashbord']).then(
             success => console.log('Navigation successful:', success),
@@ -83,22 +83,19 @@ export class LoginComponent {
       },
       error: (error: HttpErrorResponse) => {
         console.error('Login error:', error);
+        this.isLoading = false;
         
-        // Handle specific error responses from our backend
-        if (error.error?.message) {
-          this.errorMessage = error.error.message;
+        if (error.status === 0) {
+          this.errorMessage = 'Cannot connect to server. Please check your internet connection.';
         } else if (error.status === 400) {
           this.errorMessage = 'Invalid email or password';
         } else if (error.status === 401) {
-          this.errorMessage = 'Unauthorized access';
-        } else if (error.status === 404) {
-          this.errorMessage = 'User not found';
-        } else if (error.status === 0) {
-          this.errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+          this.errorMessage = 'Invalid credentials';
+        } else if (error.error?.message) {
+          this.errorMessage = error.error.message;
         } else {
           this.errorMessage = 'An error occurred. Please try again later.';
         }
-        this.isLoading = false;
       }
     });
   }
