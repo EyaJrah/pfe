@@ -8,14 +8,14 @@ import { catchError, tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = environment.apiUrl;
+  private readonly backendUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) { }
 
   // Signup method
   signup(name: string, email: string, password: string): Observable<any> {
-    console.log('Sending signup request to:', `${this.apiUrl}/auth/signup`);
-    return this.http.post(`${this.apiUrl}/auth/signup`, { name, email, password })
+    console.log('Sending signup request to:', `${this.backendUrl}/auth/signup`);
+    return this.http.post(`${this.backendUrl}/auth/signup`, { name, email, password })
       .pipe(
         tap(response => console.log('Signup response:', response)),
         catchError(this.handleError)
@@ -26,10 +26,10 @@ export class ApiService {
   login(email: string, password: string): Observable<any> {
     const body = { email, password };
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    console.log('Sending login request to:', `${this.apiUrl}/auth/login`);
+    console.log('Sending login request to:', `${this.backendUrl}/users/login`);
     console.log('With body:', body);
     
-    return this.http.post<any>(`${this.apiUrl}/auth/login`, body, { headers })
+    return this.http.post<any>(`${this.backendUrl}/users/login`, body, { headers })
       .pipe(
         tap(response => {
           console.log('Login response:', response);
@@ -54,7 +54,7 @@ export class ApiService {
     }
     
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.get(`${this.apiUrl}/auth/profile`, { headers })
+    return this.http.get(`${this.backendUrl}/users/profile`, { headers })
       .pipe(
         tap(response => console.log('Profile response:', response)),
         catchError(this.handleError)
@@ -71,7 +71,7 @@ export class ApiService {
     }
     
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.put(`${this.apiUrl}/auth/profile`, { name, email }, { headers })
+    return this.http.put(`${this.backendUrl}/users/profile`, { name, email }, { headers })
       .pipe(
         tap(response => console.log('Update profile response:', response)),
         catchError(this.handleError)
@@ -84,6 +84,25 @@ export class ApiService {
     localStorage.removeItem('auth_token');
   }
 
+  // Get scan results - can be used with or without a specific repoUrl
+  getScanResults(repoUrl?: string): Observable<any> {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      return throwError(() => new Error('No authentication token found'));
+    }
+
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    const url = repoUrl 
+      ? `${this.backendUrl}/scan-results?repoUrl=${encodeURIComponent(repoUrl)}`
+      : `${this.backendUrl}/scan-results`;
+
+    return this.http.get(url, { headers })
+      .pipe(
+        tap(response => console.log('Scan results response:', response)),
+        catchError(this.handleError)
+      );
+  }
+
   // Scanner methods
   scanWithSonarQube(repoUrl: string): Observable<any> {
     const token = localStorage.getItem('auth_token');
@@ -92,7 +111,7 @@ export class ApiService {
     }
 
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post(`${this.apiUrl}/scanners/sonarqube`, { repoUrl }, { headers })
+    return this.http.post(`${this.backendUrl}/scan-results/sonar`, { repoUrl }, { headers })
       .pipe(catchError(this.handleError));
   }
 
@@ -103,7 +122,7 @@ export class ApiService {
     }
 
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post(`${this.apiUrl}/scanners/trivy`, { repoUrl }, { headers })
+    return this.http.post(`${this.backendUrl}/scan-results/trivy`, { repoUrl }, { headers })
       .pipe(catchError(this.handleError));
   }
 
@@ -114,7 +133,7 @@ export class ApiService {
     }
 
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post(`${this.apiUrl}/scanners/snyk`, { repoUrl }, { headers })
+    return this.http.post(`${this.backendUrl}/scan-results/snyk`, { repoUrl }, { headers })
       .pipe(catchError(this.handleError));
   }
 
@@ -125,36 +144,76 @@ export class ApiService {
     }
 
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post(`${this.apiUrl}/scanners/owasp`, { repoUrl }, { headers })
+    return this.http.post(`${this.backendUrl}/scan-results/owasp`, { repoUrl }, { headers })
       .pipe(catchError(this.handleError));
   }
-  
+
+  post(endpoint: string, data: any): Observable<any> {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      return throwError(() => new Error('No authentication token found'));
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.post(`${this.backendUrl}${endpoint}`, data, { 
+      headers,
+      withCredentials: true // Important pour CORS avec credentials
+    }).pipe(
+      tap(response => console.log(`POST ${endpoint} response:`, response)),
+      catchError(error => {
+        console.error(`Error in POST ${endpoint}:`, error);
+        if (error.status === 401) {
+          // Token expiré ou invalide
+          localStorage.removeItem('auth_token');
+          return throwError(() => new Error('Session expired. Please login again.'));
+        } else if (error.status === 0) {
+          // Problème de connexion
+          return throwError(() => new Error('Cannot connect to server. Please check your connection.'));
+        }
+        return throwError(() => error);
+      })
+    );
+  }
+
   // Centralized error handling
   private handleError(error: HttpErrorResponse) {
     console.error('API Error:', error);
     
-    let errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
+    let errorMessage = 'An error occurred. Please try again.';
     
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
-      errorMessage = `Erreur: ${error.error.message}`;
+      // Erreur côté client
+      errorMessage = `Client error: ${error.error.message}`;
     } else {
-      // Server-side error
-      if (error.status === 0) {
-        errorMessage = 'Impossible de se connecter au serveur. Vérifiez votre connexion internet.';
-      } else if (error.status === 401) {
-        errorMessage = 'Session expirée. Veuillez vous reconnecter.';
-        localStorage.removeItem('auth_token');
-      } else if (error.status === 403) {
-        errorMessage = 'Accès refusé. Vous n\'avez pas les permissions nécessaires.';
-      } else if (error.status === 404) {
-        errorMessage = 'Ressource non trouvée.';
-      } else if (error.status === 500) {
-        errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
-      } else if (error.error && error.error.error) {
-        errorMessage = error.error.error;
-      } else if (error.error && error.error.errors) {
-        errorMessage = error.error.errors.map((err: any) => err.msg).join(', ');
+      // Erreur côté serveur
+      switch (error.status) {
+        case 0:
+          errorMessage = 'Cannot connect to server. Please check your connection.';
+          break;
+        case 401:
+          errorMessage = 'Session expired. Please login again.';
+          localStorage.removeItem('auth_token');
+          break;
+        case 403:
+          errorMessage = 'Access denied. You do not have the required permissions.';
+          break;
+        case 404:
+          errorMessage = 'Resource not found.';
+          break;
+        case 500:
+          errorMessage = 'Server error. Please try again later.';
+          break;
+        default:
+          if (error.error && error.error.error) {
+            errorMessage = error.error.error;
+          } else if (error.error && error.error.errors) {
+            errorMessage = error.error.errors.map((err: any) => err.msg).join(', ');
+          }
       }
     }
     

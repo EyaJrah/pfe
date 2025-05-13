@@ -3,8 +3,18 @@ const User = require('../models/User');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const authenticateToken = require('../middleware/authenticateToken');
+const { rateLimit } = require('express-rate-limit');
 
 const router = express.Router();
+
+// Configure rate limiting for login attempts
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: 'Too many login attempts from this IP, please try again after 15 minutes',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 // 🔹 Signup Route
 router.post('/signup',
@@ -58,6 +68,7 @@ router.post('/signup',
 
 // 🔹 Login Route
 router.post('/login',
+  loginLimiter, // Apply rate limiting to login route
   [
     body('email').isEmail().withMessage('Please enter a valid email address'),
     body('password').not().isEmpty().withMessage('Password is required'),
