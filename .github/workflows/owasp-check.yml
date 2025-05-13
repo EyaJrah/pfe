@@ -30,8 +30,15 @@ jobs:
         run: |
           VERSION="8.4.3"
           wget "https://github.com/jeremylong/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip"
-          unzip dependency-check-${VERSION}-release.zip
+          rm -rf dependency-check
+          unzip -o dependency-check-${VERSION}-release.zip
           chmod +x dependency-check/bin/dependency-check.sh
+
+      - name: List backend contents
+        run: ls -l backend
+
+      - name: Create reports directory
+        run: mkdir -p reports
 
       - name: Run OWASP Dependency Check
         continue-on-error: true
@@ -44,6 +51,9 @@ jobs:
             --out reports \
             --failOnCVSS 9 \
             --suppression suppression.xml || true
+
+      - name: List reports
+        run: ls -l reports || echo "No reports found"
 
       - name: Upload OWASP report
         if: always()
