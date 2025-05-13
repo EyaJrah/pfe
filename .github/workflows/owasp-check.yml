@@ -34,6 +34,12 @@ jobs:
           unzip -o dependency-check-${VERSION}-release.zip
           chmod +x dependency-check/bin/dependency-check.sh
 
+      - name: List backend contents
+        run: ls -l backend
+
+      - name: Create reports directory
+        run: mkdir -p reports
+
       - name: Run OWASP Dependency Check
         continue-on-error: true
         run: |
