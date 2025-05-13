@@ -1,0 +1,31 @@
+{
+  "ok": false,
+  "vulnerabilities": [
+    {
+      "id": "SNYK-JAVA-ORGAPACHECOMMONS-6254296",
+      "title": "Allocation of Resources Without Limits or Throttling",
+      "packageName": "org.apache.commons:commons-compress",
+      "severity": "medium",
+      "description": "Affected versions of this package are vulnerable to Allocation of Resources Without Limits or Throttling due to an OutOfMemoryError during the handling of a broken Pack200 file. See CVE-2024-26308.",
+      "version": "1.24.0"
+    },
+    {
+      "id": "SNYK-JAVA-ORGBOUNCYCASTLE-5771340",
+      "title": "Information Exposure",
+      "packageName": "org.bouncycastle:bcprov-jdk18on",
+      "severity": "medium",
+      "description": "Affected versions of this package are vulnerable to Information Exposure due to missing validation for the X.500 name of any certificate, subject, or issuer. See CVE-2023-33201.",
+      "version": "1.71"
+    },
+    {
+      "id": "SNYK-JAVA-ORGBOUNCYCASTLE-6612984",
+      "title": "Infinite loop",
+      "packageName": "org.bouncycastle:bcprov-jdk18on",
+      "severity": "high",
+      "description": "Affected versions of this package are vulnerable to Infinite loop in ED25519 verification in the ScalarUtil class. See CVE-2024-30172.",
+      "version": "1.71"
+    }
+  ],
+  "dependencyCount": 99,
+  "summary": "15 vulnerable dependency paths"
+} 
