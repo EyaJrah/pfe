@@ -23,3 +23,9 @@ ENV PORT=5000
 
 EXPOSE 5000
 CMD ["node", "server.js"]
+
+
+RUN wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.0_Linux-64bit.tar.gz && \
+    tar zxvf trivy_0.50.0_Linux-64bit.tar.gz && \
+    mv trivy /usr/local/bin/ && \
+    rm trivy_0.50.0_Linux-64bit.tar.gz
