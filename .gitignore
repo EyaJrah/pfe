@@ -45,3 +45,4 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+backend/SSRF_Vulnerable_Lab/ backend/juice-shop/ backend/terragoat/ node_modules/ .env
