@@ -2,9 +2,12 @@ name: Build
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
 
 jobs:
   sonarcloud:
@@ -27,12 +30,23 @@ jobs:
 
       - name: Create sonar-project.properties
         run: |
-          echo "sonar.projectKey=EyaJrah_pfe" > sonar-project.properties
-          echo "sonar.organization=eyajrah" >> sonar-project.properties
-          echo "sonar.host.url=https://sonarcloud.io" >> sonar-project.properties
-          echo "sonar.sources=frontend/src,backend" >> sonar-project.properties
-          echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties
-          echo "sonar.exclusions=**/node_modules/**,**/*.spec.ts" >> sonar-project.properties
+          cat > sonar-project.properties << EOF
+          sonar.projectKey=EyaJrah_pfe
+          sonar.organization=eyajrah
+          sonar.host.url=https://sonarcloud.io
+          sonar.sources=frontend/src,backend
+          sonar.sourceEncoding=UTF-8
+          sonar.exclusions=**/node_modules/**,**/*.spec.ts
+          sonar.scm.provider=git
+          sonar.pullrequest.github.repository=EyaJrah/pfe
+          sonar.pullrequest.provider=github
+          EOF
+
+      - name: Debug Info
+        run: |
+          echo "Current branch: ${{ github.ref }}"
+          echo "Event name: ${{ github.event_name }}"
+          cat sonar-project.properties
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
