@@ -17,8 +17,15 @@ jobs:
         with:
           node-version: 18
           
-      - name: Install dependencies
-        run: npm install
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm install
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
