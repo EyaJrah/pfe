@@ -18,39 +18,48 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Copy package files
-        run: |
-          cp frontend/package.json ./package.json
-          cp frontend/package-lock.json ./package-lock.json 2>/dev/null || true
-
       - name: Install frontend dependencies
-        run: |
-          npm install
-          mkdir -p frontend/node_modules
-          mv node_modules/* frontend/node_modules/
+        working-directory: ./frontend
+        run: npm install
 
       - name: Install backend dependencies
-        run: |
-          cd backend
-          npm install
+        working-directory: ./backend
+        run: npm install
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy vulnerability scanner for Frontend
         uses: aquasecurity/trivy-action@master
-        continue-on-error: true
         with:
           scan-type: 'fs'
-          ignore-unfixed: true
+          scan-ref: './frontend'
           format: 'table'
+          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
           exit-code: '1'
-          severity: 'CRITICAL,HIGH'
-          output: 'trivy-results.txt'
+          ignore-unfixed: false
+          vuln-type: 'library,vulnerability'
+          output: 'trivy-frontend-results.txt'
 
-      - name: List files after Trivy scan
-        run: ls -l
+      - name: Run Trivy vulnerability scanner for Backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './backend'
+          format: 'table'
+          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
+          exit-code: '1'
+          ignore-unfixed: false
+          vuln-type: 'library,vulnerability'
+          output: 'trivy-backend-results.txt'
+
+      - name: Combine scan results
+        run: |
+          echo "=== Frontend Vulnerabilities ===" > trivy-combined-results.txt
+          cat trivy-frontend-results.txt >> trivy-combined-results.txt
+          echo -e "\n\n=== Backend Vulnerabilities ===" >> trivy-combined-results.txt
+          cat trivy-backend-results.txt >> trivy-combined-results.txt
 
       - name: Upload Trivy scan results
         uses: actions/upload-artifact@v4
         with:
           name: trivy-results
-          path: trivy-results.txt
+          path: trivy-combined-results.txt
           retention-days: 7 
