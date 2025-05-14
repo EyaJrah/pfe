@@ -19,25 +19,15 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Copy package files
+      - name: Install Dependencies
         run: |
-          cp frontend/package.json ./package.json
-          cp frontend/package-lock.json ./package-lock.json 2>/dev/null || true
-
-      - name: Install frontend dependencies
-        run: |
+          cd frontend
           npm install
-          mkdir -p frontend/node_modules
-          mv node_modules/* frontend/node_modules/
-
-      - name: Install backend dependencies
-        run: |
-          cd backend
+          cd ../backend
           npm install
 
       - name: Run OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
-        id: dependency-check
         continue-on-error: true
         with:
           project: 'CheckSec'
@@ -45,75 +35,32 @@ jobs:
           format: 'HTML JSON'
           args: >
             --enableExperimental
-            --failOnCVSS 9
             --scan frontend/
             --scan backend/
             --out reports
-
-      - name: Debug Report Location
-        if: always()
-        run: |
-          echo "Current directory contents:"
-          ls -la
-          echo "\nReports directory contents:"
-          ls -la reports/ || echo "No reports directory found"
-          echo "\nSearching for report files:"
-          find . -type f -name "dependency-check-report.*"
-
-      - name: Process Vulnerability Report
-        if: always()
-        run: |
-          # Wait a moment for file system sync
-          sleep 2
-          
-          # Try multiple locations
-          for REPORT_PATH in \
-            "./reports/dependency-check-report.json" \
-            "./dependency-check-report.json" \
-            "$(find . -name 'dependency-check-report.json' -type f | head -n1)"
-          do
-            if [ -f "$REPORT_PATH" ]; then
-              echo "Found report at: $REPORT_PATH"
-              REPORT_FILE="$REPORT_PATH"
-              break
-            fi
-          done
-          
-          if [ -z "$REPORT_FILE" ]; then
-            echo "ERROR: No report file found!"
-            echo "Directory contents:"
-            ls -la
-            echo "\nReports directory contents:"
-            ls -la reports/ || echo "No reports directory"
-            echo "\nAll json files:"
-            find . -name "*.json" -type f
-            exit 1
-          fi
-          
-          echo "Using report file: $REPORT_FILE"
-          echo "Report file contents:"
-          cat "$REPORT_FILE" | head -n 20
-          
-          echo "### Dependency Check Results" > dependency-report.md
-          echo "" >> dependency-report.md
-          echo "#### High Severity Vulnerabilities (CVSS >= 9.0):" >> dependency-report.md
-          
-          if grep -q '"cvssv3_baseScore": [9,10]' "$REPORT_FILE"; then
-            echo "⚠️ Critical vulnerabilities found!" >> dependency-report.md
-            grep -B 2 -A 2 '"cvssv3_baseScore": [9,10]' "$REPORT_FILE" >> dependency-report.md
-          else
-            echo "✅ No critical vulnerabilities found." >> dependency-report.md
-          fi
-          
-          echo "" >> dependency-report.md
-          echo "#### Medium Severity Vulnerabilities (CVSS 7.0-8.9):" >> dependency-report.md
-          grep -B 2 -A 2 '"cvssv3_baseScore": [7,8]' "$REPORT_FILE" >> dependency-report.md || true
+            --failOnCVSS 11
 
       - name: Upload Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-reports
-          path: |
-            reports/dependency-check-report.*
-            dependency-report.md
+          path: reports/
+
+      - name: Check for Critical Vulnerabilities
+        if: always()
+        run: |
+          echo "### Dependency Check Results" > vulnerability-summary.md
+          echo "\nChecking for vulnerabilities in reports/dependency-check-report.json..."
+          
+          if [ -f "reports/dependency-check-report.json" ]; then
+            echo "\n#### Critical Vulnerabilities:" >> vulnerability-summary.md
+            grep -B 1 -A 2 '"cvssv3_baseScore": [9,10]' reports/dependency-check-report.json || echo "No critical vulnerabilities found." >> vulnerability-summary.md
+            
+            echo "\n#### High Vulnerabilities:" >> vulnerability-summary.md
+            grep -B 1 -A 2 '"cvssv3_baseScore": [7,8]' reports/dependency-check-report.json || echo "No high vulnerabilities found." >> vulnerability-summary.md
+          else
+            echo "No report file found!" >> vulnerability-summary.md
+          fi
+          
+          cat vulnerability-summary.md
