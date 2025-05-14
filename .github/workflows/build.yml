@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  sonarcloud:
+  build:
     name: SonarCloud
     runs-on: ubuntu-latest
     steps:
@@ -24,11 +24,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.projectKey=EyaJrah_pfe
+            -Dsonar.projectKey=eyajrah_pfe
             -Dsonar.organization=eyajrah
             -Dsonar.projectName=pfe
-            -Dsonar.branch.name=main
-            -Dsonar.sources=.
-            -Dsonar.exclusions=**/node_modules/**,**/*.spec.ts,**/*.test.ts,**/*.e2e-spec.ts
+            -Dsonar.sources=frontend,backend
+            -Dsonar.exclusions=**/node_modules/**,**/*.spec.ts,**/*.test.ts
             -Dsonar.sourceEncoding=UTF-8
