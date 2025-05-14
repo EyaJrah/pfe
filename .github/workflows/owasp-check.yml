@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
 
@@ -48,25 +48,21 @@ jobs:
             --failOnCVSS 9
             --scan frontend/
             --scan backend/
-            --out ./
+            --out reports
 
       - name: Debug Report Location
         if: always()
         run: |
           echo "Current directory contents:"
           ls -la
+          echo "\nReports directory contents:"
+          ls -la reports/ || echo "No reports directory found"
           echo "\nSearching for report files:"
           find . -type f -name "dependency-check-report.*"
-          echo "\nFull directory structure:"
-          find . -type f
 
       - name: Process Vulnerability Report
         if: always()
         run: |
-          # Ensure we're in the right directory
-          cd $GITHUB_WORKSPACE
-          
-          # Find the report file
           REPORT_FILE=$(find . -type f -name "dependency-check-report.json" | head -n 1)
           
           if [ -z "$REPORT_FILE" ]; then
@@ -101,5 +97,5 @@ jobs:
         with:
           name: dependency-check-reports
           path: |
-            dependency-check-report.*
+            reports/dependency-check-report.*
             dependency-report.md
