@@ -1,99 +1,50 @@
-name: Build
+name: Build and Analyze
+
 on:
   push:
-    branches:
-      - main
-      - scanresult
+    branches: [ main ]
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches: [ main ]
+
 jobs:
   sonarcloud:
-    name: SonarCloud
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      
+          fetch-depth: 0
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-          
-      - name: Run tests with coverage
-        run: npm run test:coverage
-        
-      - name: Check SonarCloud Configuration
+
+      - name: Copy package files
         run: |
-          if [ -n "${{ secrets.SONAR_TOKEN }}" ]; then
-            echo "SONAR_TOKEN is configured"
-          else
-            echo "SONAR_TOKEN is not configured"
-            exit 1
-          fi
-          if [ -n "${{ secrets.SONAR_ORGANIZATION }}" ]; then
-            echo "SONAR_ORGANIZATION is configured: ${{ secrets.SONAR_ORGANIZATION }}"
-          else
-            echo "SONAR_ORGANIZATION is not configured"
-            exit 1
-          fi
-        
-      - name: Debug sonar-project.properties
+          cp frontend/package.json ./package.json
+          cp frontend/package-lock.json ./package-lock.json 2>/dev/null || true
+
+      - name: Install frontend dependencies
         run: |
-          echo "Contenu du dossier courant :"
-          ls -l
-          echo "Contenu du fichier sonar-project.properties :"
-          cat sonar-project.properties || echo "Fichier non trouvé"
-      - name: Generate sonar-project.properties
+          npm install
+          mkdir -p frontend/node_modules
+          mv node_modules/* frontend/node_modules/
+
+      - name: Install backend dependencies
         run: |
-          echo "sonar.projectKey=eyajrah_backend" > sonar-project.properties
-          echo "sonar.organization=eyajrah" >> sonar-project.properties
-          echo "sonar.projectName=backend" >> sonar-project.properties
-          echo "sonar.projectVersion=1.0" >> sonar-project.properties
-          echo "sonar.sources=backend" >> sonar-project.properties
-          echo "sonar.exclusions=**/node_modules/**,**/*.spec.ts,**/*.test.ts" >> sonar-project.properties
-          echo "sonar.test.inclusions=**/*.spec.ts,**/*.test.ts" >> sonar-project.properties
-          echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties
-          echo "sonar.javascript.lcov.reportPaths=coverage/lcov.info" >> sonar-project.properties
-      - name: Create SonarCloud project if not exists (auto)
-        run: |
-          set -x
-          if [ ! -f sonar-project.properties ]; then
-            echo "Fichier sonar-project.properties introuvable !"
-            exit 1
-          fi
-          PROJECT_KEY=$(grep '^sonar.projectKey=' sonar-project.properties | head -n1 | cut -d'=' -f2 | tr -d '[:space:]')
-          if [ -z "$PROJECT_KEY" ]; then
-            echo "Clé sonar.projectKey introuvable dans sonar-project.properties !"
-            exit 1
-          fi
-          ORG_KEY=$(grep '^sonar.organization=' sonar-project.properties | head -n1 | cut -d'=' -f2 | tr -d '[:space:]')
-          PROJECT_NAME=$(grep '^sonar.projectName=' sonar-project.properties | head -n1 | cut -d'=' -f2 | tr -d '[:space:]')
-          echo "PROJECT_KEY=$PROJECT_KEY"
-          echo "ORG_KEY=$ORG_KEY"
-          echo "PROJECT_NAME=$PROJECT_NAME"
-          set +e
-          EXISTS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/projects/search?projects=$PROJECT_KEY" | grep -c "\"key\":\"$PROJECT_KEY\"")
-          set -e
-          echo "EXISTS=$EXISTS"
-          if [ "$EXISTS" -eq 0 ]; then
-            echo "Project does not exist, creating..."
-            curl -v -X POST "https://sonarcloud.io/api/projects/create" \
-              -u "${{ secrets.SONAR_TOKEN }}:" \
-              -d "name=$PROJECT_NAME" \
-              -d "project=$PROJECT_KEY" \
-              -d "organization=$ORG_KEY"
-          else
-            echo "Project already exists."
-          fi
-        
+          cd backend
+          npm install
+
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+        with:
+          args: >
+            -Dsonar.projectKey=EyaJrah_pfe
+            -Dsonar.organization=eyajrah
+            -Dsonar.sources=frontend/src,backend
+            -Dsonar.tests=frontend/src/**/*.spec.ts
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+            -Dsonar.typescript.tsconfigPath=frontend/tsconfig.json
