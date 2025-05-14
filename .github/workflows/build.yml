@@ -1,4 +1,4 @@
-name: Build and Analyze
+name: Build 
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
           args: >
             -Dsonar.projectKey=EyaJrah_pfe
             -Dsonar.organization=eyajrah
-            -Dsonar.sources=frontend/src,backend/src
+            -Dsonar.sources=frontend/src,backend
             -Dsonar.tests=frontend/src/app
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
             -Dsonar.typescript.tsconfigPath=frontend/tsconfig.json
