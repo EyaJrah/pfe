@@ -1,46 +1,88 @@
 name: Build
-
 on:
   push:
     branches:
       - main
+      - scanresult
   pull_request:
-    branches:
-      - main
+    types: [opened, synchronize, reopened]
 
 jobs:
-  build:
+  sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend  # Définit le dossier de travail par défaut à backend
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Cache SonarCloud packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
-      - name: Download sonar-scanner
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Check SonarCloud Configuration
         run: |
-          mkdir -p $HOME/.sonar
-          curl -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006.zip
-          unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
-          echo "$HOME/.sonar/sonar-scanner-5.0.1.3006/bin" >> $GITHUB_PATH
+          if [ -n "${{ secrets.SONAR_TOKEN }}" ]; then
+            echo "SONAR_TOKEN is configured"
+          else
+            echo "SONAR_TOKEN is not configured"
+            exit 1
+          fi
+          if [ -n "${{ secrets.SONAR_ORGANIZATION }}" ]; then
+            echo "SONAR_ORGANIZATION is configured: ${{ secrets.SONAR_ORGANIZATION }}"
+          else
+            echo "SONAR_ORGANIZATION is not configured"
+            exit 1
+          fi
 
-      - name: SonarCloud Analysis
+      - name: Generate sonar-project.properties
+        run: |
+          echo "sonar.projectKey=eyajrah_backend" > sonar-project.properties
+          echo "sonar.organization=eyajrah" >> sonar-project.properties
+          echo "sonar.projectName=backend" >> sonar-project.properties
+          echo "sonar.projectVersion=1.0" >> sonar-project.properties
+          echo "sonar.sources=." >> sonar-project.properties
+          echo "sonar.exclusions=**/node_modules/**,**/*.spec.ts,**/*.test.ts" >> sonar-project.properties
+          echo "sonar.test.inclusions=**/*.spec.ts,**/*.test.ts" >> sonar-project.properties
+          echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties
+          echo "sonar.javascript.lcov.reportPaths=../coverage/lcov.info" >> sonar-project.properties
+
+      - name: Create SonarCloud project if not exists (auto)
+        run: |
+          set -x
+          PROJECT_KEY=$(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          ORG_KEY=$(grep '^sonar.organization=' sonar-project.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          PROJECT_NAME=$(grep '^sonar.projectName=' sonar-project.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          set +e
+          EXISTS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/projects/search?projects=$PROJECT_KEY" | grep -c "\"key\":\"$PROJECT_KEY\"")
+          set -e
+          if [ "$EXISTS" -eq 0 ]; then
+            echo "Project does not exist, creating..."
+            curl -X POST "https://sonarcloud.io/api/projects/create" \
+              -u "${{ secrets.SONAR_TOKEN }}:" \
+              -d "name=$PROJECT_NAME" \
+              -d "project=$PROJECT_KEY" \
+              -d "organization=$ORG_KEY"
+          else
+            echo "Project already exists."
+          fi
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        with:
+          projectBaseDir: ./backend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          sonar-scanner \
-            -Dsonar.host.url=https://sonarcloud.io
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
