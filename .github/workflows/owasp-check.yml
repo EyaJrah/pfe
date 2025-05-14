@@ -43,35 +43,54 @@ jobs:
           project: 'CheckSec'
           path: '.'
           format: 'HTML JSON'
+          out: './reports'
           args: >
             --enableExperimental
             --failOnCVSS 9
             --scan frontend/
             --scan backend/
 
-      - name: Upload dependency check report
-        uses: actions/upload-artifact@v4
+      - name: Debug Report Location
         if: always()
+        run: |
+          echo "Current directory contents:"
+          ls -la
+          echo "\nSearching for report files:"
+          find . -name "dependency-check-report.*"
+
+      - name: Upload dependency check report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
-          path: reports/
+          path: |
+            **/dependency-check-report.html
+            **/dependency-check-report.json
 
       - name: Process Vulnerability Report
         if: always()
         run: |
+          REPORT_FILE=$(find . -name "dependency-check-report.json" | head -n 1)
+          if [ -z "$REPORT_FILE" ]; then
+            echo "No report file found!"
+            exit 1
+          fi
+          
+          echo "Using report file: $REPORT_FILE"
           echo "### Dependency Check Results" > dependency-report.md
           echo "" >> dependency-report.md
           echo "#### High Severity Vulnerabilities (CVSS >= 9.0):" >> dependency-report.md
-          if grep -q '"cvssv3_baseScore": [9,10]' reports/dependency-check-report.json; then
+          
+          if grep -q '"cvssv3_baseScore": [9,10]' "$REPORT_FILE"; then
             echo "⚠️ Critical vulnerabilities found!" >> dependency-report.md
-            grep -B 2 -A 2 '"cvssv3_baseScore": [9,10]' reports/dependency-check-report.json >> dependency-report.md
+            grep -B 2 -A 2 '"cvssv3_baseScore": [9,10]' "$REPORT_FILE" >> dependency-report.md
           else
             echo "✅ No critical vulnerabilities found." >> dependency-report.md
           fi
           
           echo "" >> dependency-report.md
           echo "#### Medium Severity Vulnerabilities (CVSS 7.0-8.9):" >> dependency-report.md
-          grep -B 2 -A 2 '"cvssv3_baseScore": [7,8]' reports/dependency-check-report.json >> dependency-report.md
+          grep -B 2 -A 2 '"cvssv3_baseScore": [7,8]' "$REPORT_FILE" >> dependency-report.md || true
 
       - name: Upload Vulnerability Report
         if: always()
