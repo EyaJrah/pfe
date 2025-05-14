@@ -4,17 +4,13 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - main
 
 jobs:
-  sonarcloud:
-    name: SonarCloud Analysis
+  build:
+    name: SonarCloud
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -23,33 +19,25 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Dependencies
-        run: |
-          cd frontend
-          npm install
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
-      - name: Create sonar-project.properties
-        run: |
-          cat > sonar-project.properties << EOF
-          sonar.projectKey=EyaJrah_pfe
-          sonar.organization=eyajrah
-          sonar.host.url=https://sonarcloud.io
-          sonar.sources=frontend/src,backend
-          sonar.sourceEncoding=UTF-8
-          sonar.exclusions=**/node_modules/**,**/*.spec.ts
-          sonar.scm.provider=git
-          sonar.pullrequest.github.repository=EyaJrah/pfe
-          sonar.pullrequest.provider=github
-          EOF
-
-      - name: Debug Info
-        run: |
-          echo "Current branch: ${{ github.ref }}"
-          echo "Event name: ${{ github.event_name }}"
-          cat sonar-project.properties
+      - name: Run tests with coverage
+        run: npm run test:coverage
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=eyajrah_backend
+            -Dsonar.organization=eyajrah
+            -Dsonar.projectName=backend
+            -Dsonar.projectVersion=1.0
+            -Dsonar.sources=backend
+            -Dsonar.exclusions=**/node_modules/**,**/*.spec.ts,**/*.test.ts
+            -Dsonar.test.inclusions=**/*.spec.ts,**/*.test.ts
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
