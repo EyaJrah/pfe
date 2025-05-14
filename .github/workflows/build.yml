@@ -28,6 +28,6 @@ jobs:
             -Dsonar.organization=eyajrah
             -Dsonar.projectName=pfe
             -Dsonar.branch.name=main
-            -Dsonar.sources=frontend/src,backend/src
+            -Dsonar.sources=frontend,backend
             -Dsonar.exclusions=**/node_modules/**,**/*.spec.ts,**/*.test.ts
             -Dsonar.sourceEncoding=UTF-8
