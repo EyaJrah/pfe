@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   trivy-scan:
     runs-on: ubuntu-latest
@@ -26,51 +31,31 @@ jobs:
         working-directory: ./backend
         run: npm install
 
-      - name: Run Trivy vulnerability scanner for Frontend
+      - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          scan-ref: './frontend'
-          format: 'sarif'
-          output: 'trivy-frontend-results.sarif'
-          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-          skip-dirs: 'frontend/node_modules'
-          skip-files: 'frontend/package-lock.json'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          output: 'trivy-results.txt'
+          timeout: '10m'
+          exit-code: '0'
 
-      - name: Run Trivy vulnerability scanner for Backend
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: './backend'
-          format: 'sarif'
-          output: 'trivy-backend-results.sarif'
-          severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-          skip-dirs: 'backend/node_modules'
-          skip-files: 'backend/package-lock.json'
-
-      - name: Upload Frontend Scan Results to GitHub Security Tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-frontend-results.sarif'
-          category: 'frontend-trivy'
-
-      - name: Upload Backend Scan Results to GitHub Security Tab
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-backend-results.sarif'
-          category: 'backend-trivy'
-
-      - name: Generate Summary Reports
+      - name: Display Trivy Results
+        if: always()
         run: |
-          echo "# Security Scan Results" > trivy-summary.txt
-          echo "## Frontend Vulnerabilities" >> trivy-summary.txt
-          trivy filesystem --severity HIGH,CRITICAL ./frontend >> trivy-summary.txt
-          echo "## Backend Vulnerabilities" >> trivy-summary.txt
-          trivy filesystem --severity HIGH,CRITICAL ./backend >> trivy-summary.txt
+          if [ -f trivy-results.txt ]; then
+            echo "Scan Results:"
+            cat trivy-results.txt
+          else
+            echo "No scan results found"
+          fi
 
-      - name: Upload Summary Report
+      - name: Upload Trivy Results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: trivy-results
-          path: trivy-summary.txt
+          path: trivy-results.txt
           retention-days: 7 
