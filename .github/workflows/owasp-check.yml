@@ -43,12 +43,12 @@ jobs:
           project: 'CheckSec'
           path: '.'
           format: 'HTML JSON'
-          out: './reports'
           args: >
             --enableExperimental
             --failOnCVSS 9
             --scan frontend/
             --scan backend/
+            --out ./
 
       - name: Debug Report Location
         if: always()
@@ -56,27 +56,30 @@ jobs:
           echo "Current directory contents:"
           ls -la
           echo "\nSearching for report files:"
-          find . -name "dependency-check-report.*"
-
-      - name: Upload dependency check report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-check-report
-          path: |
-            **/dependency-check-report.html
-            **/dependency-check-report.json
+          find . -type f -name "dependency-check-report.*"
+          echo "\nFull directory structure:"
+          find . -type f
 
       - name: Process Vulnerability Report
         if: always()
         run: |
-          REPORT_FILE=$(find . -name "dependency-check-report.json" | head -n 1)
+          # Ensure we're in the right directory
+          cd $GITHUB_WORKSPACE
+          
+          # Find the report file
+          REPORT_FILE=$(find . -type f -name "dependency-check-report.json" | head -n 1)
+          
           if [ -z "$REPORT_FILE" ]; then
-            echo "No report file found!"
+            echo "ERROR: No report file found!"
+            echo "Directory contents:"
+            ls -la
             exit 1
           fi
           
-          echo "Using report file: $REPORT_FILE"
+          echo "Found report file at: $REPORT_FILE"
+          echo "Report file contents:"
+          cat "$REPORT_FILE" | head -n 20
+          
           echo "### Dependency Check Results" > dependency-report.md
           echo "" >> dependency-report.md
           echo "#### High Severity Vulnerabilities (CVSS >= 9.0):" >> dependency-report.md
@@ -92,9 +95,11 @@ jobs:
           echo "#### Medium Severity Vulnerabilities (CVSS 7.0-8.9):" >> dependency-report.md
           grep -B 2 -A 2 '"cvssv3_baseScore": [7,8]' "$REPORT_FILE" >> dependency-report.md || true
 
-      - name: Upload Vulnerability Report
+      - name: Upload Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: vulnerability-report
-          path: dependency-report.md
+          name: dependency-check-reports
+          path: |
+            dependency-check-report.*
+            dependency-report.md
