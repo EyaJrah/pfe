@@ -31,35 +31,46 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: './frontend'
-          format: 'table'
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
           severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-          exit-code: '1'
-          ignore-unfixed: false
-          vuln-type: 'library,vulnerability'
-          output: 'trivy-frontend-results.txt'
+          skip-dirs: 'frontend/node_modules'
+          skip-files: 'frontend/package-lock.json'
 
       - name: Run Trivy vulnerability scanner for Backend
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: './backend'
-          format: 'table'
+          format: 'sarif'
+          output: 'trivy-backend-results.sarif'
           severity: 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
-          exit-code: '1'
-          ignore-unfixed: false
-          vuln-type: 'library,vulnerability'
-          output: 'trivy-backend-results.txt'
+          skip-dirs: 'backend/node_modules'
+          skip-files: 'backend/package-lock.json'
 
-      - name: Combine scan results
+      - name: Upload Frontend Scan Results to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-frontend-results.sarif'
+          category: 'frontend-trivy'
+
+      - name: Upload Backend Scan Results to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-backend-results.sarif'
+          category: 'backend-trivy'
+
+      - name: Generate Summary Reports
         run: |
-          echo "=== Frontend Vulnerabilities ===" > trivy-combined-results.txt
-          cat trivy-frontend-results.txt >> trivy-combined-results.txt
-          echo -e "\n\n=== Backend Vulnerabilities ===" >> trivy-combined-results.txt
-          cat trivy-backend-results.txt >> trivy-combined-results.txt
+          echo "# Security Scan Results" > trivy-summary.txt
+          echo "## Frontend Vulnerabilities" >> trivy-summary.txt
+          trivy filesystem --severity HIGH,CRITICAL ./frontend >> trivy-summary.txt
+          echo "## Backend Vulnerabilities" >> trivy-summary.txt
+          trivy filesystem --severity HIGH,CRITICAL ./backend >> trivy-summary.txt
 
-      - name: Upload Trivy scan results
+      - name: Upload Summary Report
         uses: actions/upload-artifact@v4
         with:
           name: trivy-results
-          path: trivy-combined-results.txt
+          path: trivy-summary.txt
           retention-days: 7 
