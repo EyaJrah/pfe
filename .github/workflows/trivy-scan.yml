@@ -17,17 +17,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
+
+      - name: Copy package files
+        run: |
+          cp frontend/package.json ./package.json
+          cp frontend/package-lock.json ./package-lock.json 2>/dev/null || true
 
       - name: Install frontend dependencies
         run: |
-          cd frontend
-          npm ci
+          npm install
+          mkdir -p frontend/node_modules
+          mv node_modules/* frontend/node_modules/
 
       - name: Install backend dependencies
         run: |
           cd backend
-          npm ci
+          npm install
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master

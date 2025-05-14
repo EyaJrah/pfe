@@ -9,76 +9,62 @@ on:
 
 jobs:
   dependency-check:
+    name: OWASP Dependency Check
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
+      - name: Copy package files
+        run: |
+          cp frontend/package.json ./package.json
+          cp frontend/package-lock.json ./package-lock.json 2>/dev/null || true
+
       - name: Install frontend dependencies
         run: |
-          cd frontend
           npm install
+          mkdir -p frontend/node_modules
+          mv node_modules/* frontend/node_modules/
 
       - name: Install backend dependencies
         run: |
           cd backend
           npm install
 
-      - name: Install OWASP Dependency-Check CLI
+      - name: Install Dependency-Check CLI
         run: |
-          VERSION="8.4.3"
-          wget "https://github.com/jeremylong/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip"
-          rm -rf dependency-check
-          unzip -o dependency-check-${VERSION}-release.zip
+          VERSION=$(curl -s https://jeremylong.github.io/DependencyCheck/current.txt)
+          wget "https://github.com/jeremylong/DependencyCheck/releases/download/v$VERSION/dependency-check-$VERSION-release.zip"
+          unzip dependency-check-$VERSION-release.zip
           chmod +x dependency-check/bin/dependency-check.sh
 
       - name: Create reports directory
         run: mkdir -p reports
 
-      - name: Run OWASP Dependency Check
-        continue-on-error: true
+      - name: Run Dependency Check
         run: |
           ./dependency-check/bin/dependency-check.sh \
             --project "CheckSec" \
-            --scan frontend/ \
-            --scan backend/ \
-            --format HTML \
-            --format JSON \
-            --out reports \
-            --failOnCVSS 9 \
-            --suppression suppression.xml || true
+            --scan frontend/ backend/ \
+            --format "HTML" "JSON" \
+            --out reports/ \
+            --enableExperimental \
+            --failOnCVSS 7
 
-      - name: List reports
-        run: ls -l reports || echo "No reports found"
-
-      - name: Upload OWASP report
-        if: always()
+      - name: Upload dependency check report
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
           path: reports/
-          retention-days: 7
 
-      - name: Check for critical vulnerabilities
-        if: always()
+      - name: Check for Critical Vulnerabilities
         run: |
-          if [ -f reports/dependency-check-report.json ]; then
-            echo "Checking for critical severity vulnerabilities..."
-            CRITICAL_VULNS=$(jq '.dependencies[] | select(.vulnerabilities != null) | .vulnerabilities[] | select(.cvssv3_baseScore >= 9) | .name' reports/dependency-check-report.json | wc -l)
-            if [ "$CRITICAL_VULNS" -gt 0 ]; then
-              echo "⚠️ Found $CRITICAL_VULNS critical severity vulnerabilities!"
-              echo "Please check the generated report in the artifacts for details."
-              exit 0
-            else
-              echo "✅ No critical severity vulnerabilities found."
-            fi
-          else
-            echo "⚠️ No JSON report found. Check HTML report for results."
-            exit 0
+          if grep -q '"severity": 9' reports/dependency-check-report.json || grep -q '"severity": 10' reports/dependency-check-report.json; then
+            echo "Critical vulnerabilities found!"
+            exit 1
           fi
