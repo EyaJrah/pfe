@@ -21,7 +21,12 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Install backend dependencies
         run: |
           cd backend
           npm ci
@@ -34,9 +39,6 @@ jobs:
           unzip -o dependency-check-${VERSION}-release.zip
           chmod +x dependency-check/bin/dependency-check.sh
 
-      - name: List backend contents
-        run: ls -l backend
-
       - name: Create reports directory
         run: mkdir -p reports
 
@@ -44,7 +46,8 @@ jobs:
         continue-on-error: true
         run: |
           ./dependency-check/bin/dependency-check.sh \
-            --project "PFE Backend" \
+            --project "CheckSec" \
+            --scan frontend/ \
             --scan backend/ \
             --format HTML \
             --format JSON \
