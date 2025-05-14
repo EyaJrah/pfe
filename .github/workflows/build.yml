@@ -1,4 +1,4 @@
-name: Build 
+name: Build and Analyze
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 
 jobs:
   sonarcloud:
+    name: SonarCloud Analysis
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +36,11 @@ jobs:
           cd backend
           npm install
 
+      - name: Run Tests with Coverage
+        run: |
+          cd frontend
+          npm run test:coverage
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -50,3 +56,5 @@ jobs:
             -Dsonar.typescript.tsconfigPath=frontend/tsconfig.json
             -Dsonar.exclusions=**/node_modules/**,**/*.spec.ts
             -Dsonar.test.inclusions=frontend/src/app/**/*.spec.ts
+            -Dsonar.branch.name=${{ github.ref_name }}
+            -Dsonar.branch.target=main
