@@ -357,14 +357,16 @@ export class ScanResultsComponent implements OnInit {
   }
 
   getTrivyVulnerabilities(severity: string): number {
-    if (!this.scanResults.trivy?.length) return 0;
-    
-    return this.scanResults.trivy.filter(vuln => vuln.Vulnerabilities.some(v => v.Severity.toLowerCase() === severity.toLowerCase())).length;
+    if (!this.trivyVulns) {
+      return 0;
+    }
+    return this.trivyVulns.filter(
+      vuln => vuln.severity && vuln.severity.toLowerCase() === severity.toLowerCase()
+    ).length;
   }
 
   getTotalTrivyVulnerabilities(): number {
-    if (!this.scanResults.trivy?.length) return 0;
-    return this.scanResults.trivy.length;
+    return this.trivyVulns ? this.trivyVulns.length : 0;
   }
 
   getTrivyTargets(): string[] {
@@ -373,19 +375,16 @@ export class ScanResultsComponent implements OnInit {
   }
 
   getSnykVulnerabilities(severity: string): number {
-    if (!this.scanResults.snyk?.vulnerabilities) {
+    if (!this.snykVulns) {
       return 0;
     }
-    return this.scanResults.snyk.vulnerabilities.filter(
-      vuln => vuln.severity.toLowerCase() === severity.toLowerCase()
+    return this.snykVulns.filter(
+      vuln => vuln.severity && vuln.severity.toLowerCase() === severity.toLowerCase()
     ).length;
   }
 
   getTotalSnykVulnerabilities(): number {
-    if (!this.scanResults.snyk?.vulnerabilities) {
-      return 0;
-    }
-    return this.scanResults.snyk.vulnerabilities.length;
+    return this.snykVulns ? this.snykVulns.length : 0;
   }
 
   getBugCount(): number {
@@ -422,12 +421,15 @@ export class ScanResultsComponent implements OnInit {
   }
 
   getTotalOwaspVulnerabilities(): number {
-    return this.scanResults.owasp.vulnerabilities.length;
+    return this.owaspVulns ? this.owaspVulns.length : 0;
   }
 
   getOwaspVulnerabilities(severity: string): number {
-    return this.scanResults.owasp.vulnerabilities.filter(
-      vuln => vuln.severity.toLowerCase() === severity.toLowerCase()
+    if (!this.owaspVulns) {
+      return 0;
+    }
+    return this.owaspVulns.filter(
+      vuln => vuln.severity && vuln.severity.toLowerCase() === severity.toLowerCase()
     ).length;
   }
 
@@ -545,9 +547,7 @@ export class ScanResultsComponent implements OnInit {
   }
 
   getTrivyTotalVulnerabilities(): number {
-    if (!this.scanResults.trivy?.length) return 0;
-    // Additionner toutes les vulnérabilités de chaque cible
-    return this.scanResults.trivy.reduce((acc, curr) => acc + (curr.Vulnerabilities?.length || 0), 0);
+    return this.trivyVulns ? this.trivyVulns.length : 0;
   }
 
   getTrivyCriticalVulnerabilities(): number {
@@ -589,18 +589,10 @@ export class ScanResultsComponent implements OnInit {
   }
 
   private getTrivyVulnerabilitiesBySeverity(severity: string): number {
-    if (!this.scanResults.trivy?.length) return 0;
-    // Correction : on vérifie que v.Severity existe avant d'appeler .toLowerCase()
-    return this.scanResults.trivy.reduce(
-      (acc, curr) =>
-        acc +
-        (curr.Vulnerabilities
-          ? curr.Vulnerabilities.filter(
-              v => v.Severity && v.Severity.toLowerCase() === severity.toLowerCase()
-            ).length
-          : 0),
-      0
-    );
+    if (!this.trivyVulns) return 0;
+    return this.trivyVulns.filter(
+      vuln => vuln.severity && vuln.severity.toLowerCase() === severity.toLowerCase()
+    ).length;
   }
 
   // Toggle methods for details sections
