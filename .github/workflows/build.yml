@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -21,11 +24,10 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=EyaJrah_pfe
+            -Dsonar.projectKey=eyajrah_pfe
             -Dsonar.organization=eyajrah
-            -Dsonar.projectName=CheckSec
-            -Dsonar.projectVersion=1.0
-            -Dsonar.sources=frontend/src,backend
-            -Dsonar.exclusions=**/node_modules/**,**/*.spec.ts,**/*.test.ts,**/*.e2e-spec.ts
+            -Dsonar.projectName=pfe
+            -Dsonar.branch.name=main
+            -Dsonar.sources=frontend/src,backend/src
+            -Dsonar.exclusions=**/node_modules/**,**/*.spec.ts,**/*.test.ts
             -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info,backend/coverage/lcov.info
