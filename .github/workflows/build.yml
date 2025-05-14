@@ -1,4 +1,4 @@
-name: Build and Analyze
+name: Build 
 
 on:
   push:
@@ -40,7 +40,11 @@ jobs:
         run: |
           cd frontend
           npm install -g @angular/cli
-          ng test --no-watch --code-coverage
+          # Configure Karma for CI environment
+          sed -i 's/browsers: \[.*/browsers: ["ChromeHeadless"],/' karma.conf.js
+          sed -i 's/singleRun: .*/singleRun: true,/' karma.conf.js
+          # Run tests
+          npm run test -- --no-watch --code-coverage --browsers=ChromeHeadless
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master

@@ -63,16 +63,34 @@ jobs:
       - name: Process Vulnerability Report
         if: always()
         run: |
-          REPORT_FILE=$(find . -type f -name "dependency-check-report.json" | head -n 1)
+          # Wait a moment for file system sync
+          sleep 2
+          
+          # Try multiple locations
+          for REPORT_PATH in \
+            "./reports/dependency-check-report.json" \
+            "./dependency-check-report.json" \
+            "$(find . -name 'dependency-check-report.json' -type f | head -n1)"
+          do
+            if [ -f "$REPORT_PATH" ]; then
+              echo "Found report at: $REPORT_PATH"
+              REPORT_FILE="$REPORT_PATH"
+              break
+            fi
+          done
           
           if [ -z "$REPORT_FILE" ]; then
             echo "ERROR: No report file found!"
             echo "Directory contents:"
             ls -la
+            echo "\nReports directory contents:"
+            ls -la reports/ || echo "No reports directory"
+            echo "\nAll json files:"
+            find . -name "*.json" -type f
             exit 1
           fi
           
-          echo "Found report file at: $REPORT_FILE"
+          echo "Using report file: $REPORT_FILE"
           echo "Report file contents:"
           cat "$REPORT_FILE" | head -n 20
           
