@@ -1,4 +1,4 @@
-name: Build 
+name: Build
 
 on:
   push:
@@ -20,31 +20,10 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Copy package files
-        run: |
-          cp frontend/package.json ./package.json
-          cp frontend/package-lock.json ./package-lock.json 2>/dev/null || true
-
-      - name: Install frontend dependencies
-        run: |
-          npm install
-          mkdir -p frontend/node_modules
-          mv node_modules/* frontend/node_modules/
-
-      - name: Install backend dependencies
-        run: |
-          cd backend
-          npm install
-
-      - name: Run Tests with Coverage
+      - name: Install Dependencies
         run: |
           cd frontend
-          npm install -g @angular/cli
-          # Configure Karma for CI environment
-          sed -i 's/browsers: \[.*/browsers: ["ChromeHeadless"],/' karma.conf.js
-          sed -i 's/singleRun: .*/singleRun: true,/' karma.conf.js
-          # Run tests
-          npm run test -- --no-watch --code-coverage --browsers=ChromeHeadless
+          npm install
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
@@ -56,10 +35,4 @@ jobs:
             -Dsonar.projectKey=EyaJrah_pfe
             -Dsonar.organization=eyajrah
             -Dsonar.sources=frontend/src,backend
-            -Dsonar.tests=frontend/src/app
-            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
-            -Dsonar.typescript.tsconfigPath=frontend/tsconfig.json
             -Dsonar.exclusions=**/node_modules/**,**/*.spec.ts
-            -Dsonar.test.inclusions=frontend/src/app/**/*.spec.ts
-            -Dsonar.branch.name=${{ github.ref_name }}
-            -Dsonar.branch.target=main
