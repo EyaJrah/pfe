@@ -31,31 +31,49 @@ jobs:
         working-directory: ./backend
         run: npm install
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy vulnerability scanner in fs mode
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
-          severity: 'CRITICAL,HIGH'
-          output: 'trivy-results.txt'
-          timeout: '10m'
-          exit-code: '0'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          scanners: 'vuln,secret,config'
+          skip-dirs: 'frontend/node_modules,backend/node_modules'
+
+      - name: Scan frontend dependencies
+        working-directory: ./frontend
+        run: |
+          echo "Frontend Dependencies Scan:" > frontend-deps.txt
+          trivy fs --security-checks vuln --severity CRITICAL,HIGH,MEDIUM . >> frontend-deps.txt
+
+      - name: Scan backend dependencies
+        working-directory: ./backend
+        run: |
+          echo "Backend Dependencies Scan:" > backend-deps.txt
+          trivy fs --security-checks vuln --severity CRITICAL,HIGH,MEDIUM . >> backend-deps.txt
+
+      - name: Combine results
+        run: |
+          echo "=== Security Scan Results ===" > trivy-results.txt
+          echo -e "\n=== File System Scan Results ===" >> trivy-results.txt
+          trivy fs --security-checks vuln,secret,config --severity CRITICAL,HIGH,MEDIUM . >> trivy-results.txt
+          echo -e "\n=== Frontend Dependencies Results ===" >> trivy-results.txt
+          cat frontend-deps.txt >> trivy-results.txt
+          echo -e "\n=== Backend Dependencies Results ===" >> trivy-results.txt
+          cat backend-deps.txt >> trivy-results.txt
 
       - name: Display Trivy Results
         if: always()
-        run: |
-          if [ -f trivy-results.txt ]; then
-            echo "Scan Results:"
-            cat trivy-results.txt
-          else
-            echo "No scan results found"
-          fi
+        run: cat trivy-results.txt
 
       - name: Upload Trivy Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: trivy-results
-          path: trivy-results.txt
+          path: |
+            trivy-results.txt
+            frontend-deps.txt
+            backend-deps.txt
           retention-days: 7 
