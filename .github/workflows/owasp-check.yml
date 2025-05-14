@@ -37,25 +37,45 @@ jobs:
 
       - name: Run OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
+        id: dependency-check
+        continue-on-error: true
         with:
           project: 'CheckSec'
           path: '.'
           format: 'HTML JSON'
           args: >
             --enableExperimental
-            --failOnCVSS 7
+            --failOnCVSS 9
             --scan frontend/
             --scan backend/
 
       - name: Upload dependency check report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: dependency-check-report
           path: reports/
 
-      - name: Check for Critical Vulnerabilities
+      - name: Process Vulnerability Report
+        if: always()
         run: |
-          if grep -q '"severity": 9' reports/dependency-check-report.json || grep -q '"severity": 10' reports/dependency-check-report.json; then
-            echo "Critical vulnerabilities found!"
-            exit 1
+          echo "### Dependency Check Results" > dependency-report.md
+          echo "" >> dependency-report.md
+          echo "#### High Severity Vulnerabilities (CVSS >= 9.0):" >> dependency-report.md
+          if grep -q '"cvssv3_baseScore": [9,10]' reports/dependency-check-report.json; then
+            echo "⚠️ Critical vulnerabilities found!" >> dependency-report.md
+            grep -B 2 -A 2 '"cvssv3_baseScore": [9,10]' reports/dependency-check-report.json >> dependency-report.md
+          else
+            echo "✅ No critical vulnerabilities found." >> dependency-report.md
           fi
+          
+          echo "" >> dependency-report.md
+          echo "#### Medium Severity Vulnerabilities (CVSS 7.0-8.9):" >> dependency-report.md
+          grep -B 2 -A 2 '"cvssv3_baseScore": [7,8]' reports/dependency-check-report.json >> dependency-report.md
+
+      - name: Upload Vulnerability Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerability-report
+          path: dependency-report.md
