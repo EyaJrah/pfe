@@ -35,25 +35,17 @@ jobs:
           cd backend
           npm install
 
-      - name: Install Dependency-Check CLI
-        run: |
-          VERSION="8.4.0"
-          curl -LO "https://github.com/dependency-check/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip"
-          unzip -q dependency-check-${VERSION}-release.zip
-          chmod +x dependency-check/bin/dependency-check.sh
-
-      - name: Create reports directory
-        run: mkdir -p reports
-
-      - name: Run Dependency Check
-        run: |
-          ./dependency-check/bin/dependency-check.sh \
-            --project "CheckSec" \
-            --scan frontend/ backend/ \
-            --format "HTML" "JSON" \
-            --out reports/ \
-            --enableExperimental \
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'CheckSec'
+          path: '.'
+          format: 'HTML JSON'
+          args: >
+            --enableExperimental
             --failOnCVSS 7
+            --scan frontend/
+            --scan backend/
 
       - name: Upload dependency check report
         uses: actions/upload-artifact@v4
