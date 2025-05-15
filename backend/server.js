@@ -99,6 +99,8 @@ console.log('Serving static files from:', publicPath);
 if (!fs.existsSync(publicPath)) {
   console.error('Public directory not found at:', publicPath);
   console.log('Current directory contents:', fs.readdirSync(__dirname));
+} else {
+  console.log('Public directory contents:', fs.readdirSync(publicPath));
 }
 app.use(express.static(publicPath));
 
@@ -107,11 +109,30 @@ app.get('*', (req, res) => {
   const indexPath = path.join(__dirname, 'public/index.html');
   console.log('Serving index.html for path:', req.path);
   console.log('Index file path:', indexPath);
+  
+  // Vérifier si le fichier existe
   if (!fs.existsSync(indexPath)) {
     console.error('index.html not found at:', indexPath);
-    console.log('Directory contents:', fs.readdirSync(path.dirname(indexPath)));
+    // Vérifier le contenu du dossier public et ses sous-dossiers
+    const walkDir = (dir) => {
+      let results = [];
+      const list = fs.readdirSync(dir);
+      list.forEach((file) => {
+        const fullPath = path.join(dir, file);
+        const stat = fs.statSync(fullPath);
+        if (stat && stat.isDirectory()) {
+          results = results.concat(walkDir(fullPath));
+        } else {
+          results.push(fullPath);
+        }
+      });
+      return results;
+    };
+    
+    console.log('Full directory structure:', walkDir(publicPath));
     return res.status(404).send('Application not found');
   }
+  
   res.sendFile(indexPath);
 });
 
