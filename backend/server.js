@@ -94,17 +94,22 @@ app.use('/api/users', userRoutes);
 app.use('/api/scan-results', scanResults);
 
 // Serve static files from Angular build
-const angularDistPath = path.join(__dirname, '../frontend/dist/frontend');
+const angularDistPath = path.join(__dirname, '../dist/browser');
 console.log('Serving static files from:', angularDistPath);
+if (!fs.existsSync(angularDistPath)) {
+  console.error('Angular build directory not found at:', angularDistPath);
+  console.log('Current directory contents:', fs.readdirSync(__dirname));
+}
 app.use(express.static(angularDistPath));
 
 // Handle Angular routing
 app.get('*', (req, res) => {
-  const indexPath = path.join(__dirname, '../frontend/dist/frontend/index.html');
+  const indexPath = path.join(__dirname, '../dist/browser/index.html');
   console.log('Serving index.html for path:', req.path);
   console.log('Index file path:', indexPath);
   if (!fs.existsSync(indexPath)) {
     console.error('index.html not found at:', indexPath);
+    console.log('Directory contents:', fs.readdirSync(path.dirname(indexPath)));
     return res.status(404).send('Application not found');
   }
   res.sendFile(indexPath);
