@@ -20,11 +20,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://code.getmdl.io", "http://ajax.googleapis.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://api.github.com", "https://sonarcloud.io"]
+      connectSrc: ["'self'", "http://localhost:5000", "https://api.github.com", "https://sonarcloud.io", "https://pfe-app-imrs.onrender.com"]
     }
   }
 }));
@@ -37,7 +37,7 @@ if (!fs.existsSync(tempDir)) {
 
 // CORS configuration
 const corsOptions = {
-  origin: ['http://localhost:4200', 'http://127.0.0.1:4200', 'https://pfe-app-imrs.onrender.com', 'https://pfe-app-imrs.onrender.com'],
+  origin: ['http://localhost:4200', 'http://localhost:5000', 'http://127.0.0.1:4200', 'http://127.0.0.1:5000', 'https://pfe-app-imrs.onrender.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
