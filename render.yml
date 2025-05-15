@@ -1,0 +1,6 @@
+services:
+  - type: docker-compose
+    name: my-app
+    repo: https://github.com/EyaJrah/pfe
+    branch: main
+    dockerComposePath: ./docker-compose.yml
