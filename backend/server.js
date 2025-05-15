@@ -94,20 +94,17 @@ app.use('/api/users', userRoutes);
 app.use('/api/scan-results', scanResults);
 
 // Serve static files from Angular build
-const angularDistPath = path.join(__dirname, '../dist/temp-app/browser');
-console.log('Serving static files from:', angularDistPath);
-if (!fs.existsSync(angularDistPath)) {
-  console.error('Angular build directory not found at:', angularDistPath);
+const publicPath = path.join(__dirname, 'public');
+console.log('Serving static files from:', publicPath);
+if (!fs.existsSync(publicPath)) {
+  console.error('Public directory not found at:', publicPath);
   console.log('Current directory contents:', fs.readdirSync(__dirname));
-  if (fs.existsSync(path.join(__dirname, '../dist'))) {
-    console.log('Contents of dist directory:', fs.readdirSync(path.join(__dirname, '../dist')));
-  }
 }
-app.use(express.static(angularDistPath));
+app.use(express.static(publicPath));
 
 // Handle Angular routing
 app.get('*', (req, res) => {
-  const indexPath = path.join(__dirname, '../dist/temp-app/browser/index.html');
+  const indexPath = path.join(__dirname, 'public/index.html');
   console.log('Serving index.html for path:', req.path);
   console.log('Index file path:', indexPath);
   if (!fs.existsSync(indexPath)) {
