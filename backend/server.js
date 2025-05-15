@@ -46,17 +46,28 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // MongoDB connection
 const connectDB = async () => {
-  const mongoUri = process.env.MONGO_URI;
-  if (!mongoUri) {
-    console.error('MONGO_URI is not set');
-    process.exit(1);
-  }
+  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/pfe';
+  
+  // Log the connection attempt (sans mot de passe)
+  const sanitizedUri = mongoUri.replace(/:([^:@]+)@/, ':****@');
+  console.log('Tentative de connexion à MongoDB:', sanitizedUri);
+  
   try {
-    const conn = await mongoose.connect(mongoUri);
+    const conn = await mongoose.connect(mongoUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      retryWrites: true,
+      w: 'majority'
+    });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    process.exit(1);
+    // Ne pas quitter le processus en production
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Continuing despite MongoDB connection error');
+    } else {
+      process.exit(1);
+    }
   }
 };
 connectDB();
