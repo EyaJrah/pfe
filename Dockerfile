@@ -14,7 +14,7 @@ RUN npm install
 COPY backend/ .
 
 # Copie les fichiers Angular compilés
-COPY --from=frontend-build /app/dist/temp-app/ ./public/
+COPY --from=frontend-build /app/dist/temp-app/browser/ ./public/
 
 # Expose le port
 EXPOSE 5000
