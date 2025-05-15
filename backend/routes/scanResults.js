@@ -4,7 +4,8 @@ const authenticateToken = require('../middleware/authenticateToken');
 const { execFile } = require('child_process');
 const ScanResult = require('../models/ScanResult');
 const fs = require('fs');
-const scriptPath = '/home/thinkpad/Documents/pfe/scan-and-send.sh';
+const path = require('path');
+const scriptPath = path.join(__dirname, '..', 'scripts', 'scan-and-send.sh');
 
 // POST /api/scan-results/scan-all
 router.post('/scan-all', authenticateToken, async (req, res) => {
@@ -14,9 +15,27 @@ router.post('/scan-all', authenticateToken, async (req, res) => {
     return res.status(400).json({ error: 'githubUrl is required' });
   }
 
+  console.log('Running scan script at:', scriptPath);
+  console.log('For repository:', githubUrl);
+
+  // Vérifier si le script existe
+  if (!fs.existsSync(scriptPath)) {
+    console.error('Script not found at:', scriptPath);
+    return res.status(500).json({ error: 'Scan script not found' });
+  }
+
+  // Rendre le script exécutable
+  try {
+    await fs.promises.chmod(scriptPath, '755');
+  } catch (error) {
+    console.error('Error making script executable:', error);
+  }
+
   execFile(scriptPath, [githubUrl], { maxBuffer: 1024 * 1024 * 50 }, async (error, stdout, stderr) => {
     if (error) {
       console.error('Script error:', error);
+      console.error('Script stderr:', stderr);
+      console.error('Script stdout:', stdout);
       return res.status(500).json({ error: stderr || error.message });
     }
 
