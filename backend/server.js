@@ -16,7 +16,18 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Apply Helmet middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://api.github.com", "https://sonarcloud.io"]
+    }
+  }
+}));
 
 // Create temp directory if needed
 const tempDir = path.join(__dirname, 'temp');
@@ -26,9 +37,10 @@ if (!fs.existsSync(tempDir)) {
 
 // CORS configuration
 const corsOptions = {
-  origin: ['http://localhost:4200', 'http://127.0.0.1:4200', 'https://pfe-app-imrs.onrender.com'],
+  origin: ['http://localhost:4200', 'http://127.0.0.1:4200', 'https://pfe-app-imrs.onrender.com', 'https://pfe-app-imrs.onrender.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   credentials: true,
   maxAge: 86400
 };
@@ -82,11 +94,20 @@ app.use('/api/users', userRoutes);
 app.use('/api/scan-results', scanResults);
 
 // Serve static files from Angular build
-app.use(express.static(path.join(__dirname, '../frontend/dist/frontend')));
+const angularDistPath = path.join(__dirname, '../frontend/dist/frontend');
+console.log('Serving static files from:', angularDistPath);
+app.use(express.static(angularDistPath));
 
 // Handle Angular routing
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/frontend/index.html'));
+  const indexPath = path.join(__dirname, '../frontend/dist/frontend/index.html');
+  console.log('Serving index.html for path:', req.path);
+  console.log('Index file path:', indexPath);
+  if (!fs.existsSync(indexPath)) {
+    console.error('index.html not found at:', indexPath);
+    return res.status(404).send('Application not found');
+  }
+  res.sendFile(indexPath);
 });
 
 // Helper functions
