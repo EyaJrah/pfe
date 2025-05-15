@@ -10,10 +10,12 @@ export class ScriptService {
   constructor(private http: HttpClient) {}
 
   runScript(repoUrl: string): Observable<any> {
-    return this.http.get<any>(`${this.backendUrl}/run-script`, { params: { repoUrl } });
+    console.log('Calling API at:', `${this.backendUrl}/scan-results/scan-all`);
+    return this.http.post<any>(`${this.backendUrl}/scan-results/scan-all`, { githubUrl: repoUrl });
   }
 
   runScanAndSend(repoUrl: string): Observable<any> {
-    return this.http.get<any>(`${this.backendUrl}/run-script`, { params: { repoUrl } });
+    console.log('Calling API at:', `${this.backendUrl}/scan-results/scan-all`);
+    return this.http.post<any>(`${this.backendUrl}/scan-results/scan-all`, { githubUrl: repoUrl });
   }
 } 
