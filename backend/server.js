@@ -26,7 +26,7 @@ if (!fs.existsSync(tempDir)) {
 
 // CORS configuration
 const corsOptions = {
-  origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+  origin: ['http://localhost:4200', 'http://127.0.0.1:4200', 'https://pfe-app-imrs.onrender.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   credentials: true,
@@ -80,6 +80,14 @@ app.get('/', (req, res) => {
 
 app.use('/api/users', userRoutes);
 app.use('/api/scan-results', scanResults);
+
+// Serve static files from Angular build
+app.use(express.static(path.join(__dirname, '../frontend/dist/frontend')));
+
+// Handle Angular routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/frontend/index.html'));
+});
 
 // Helper functions
 const safeReadJson = (filePath) => {
@@ -266,12 +274,6 @@ const handleScan = (req, res) => {
 app.get('/api/run-script', handleScan);
 app.get('/api/scan-and-send', handleScan);
 
+// Start server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Handle Angular routing
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
-});
