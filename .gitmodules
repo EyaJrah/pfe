@@ -1,0 +1,11 @@
+[submodule "backend/SSRF_Vulnerable_Lab"]
+    path = backend/SSRF_Vulnerable_Lab
+    url = https://github.com/incredibleindishell/SSRF_Vulnerable_Lab.git
+
+[submodule "backend/juice-shop"]
+    path = backend/juice-shop
+    url = https://github.com/juice-shop/juice-shop.git
+
+[submodule "backend/terragoat"]
+    path = backend/terragoat
+    url = https://github.com/bridgecrewio/terragoat.git 
