@@ -8,7 +8,10 @@ services:
       - "27017:27017"
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
     ports:
       - "5000:5000"
     environment:
@@ -17,8 +20,11 @@ services:
       - mongo
 
   frontend:
-    build: 
-      context: .  
-      dockerfile: src/Dockerfile  
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
     ports:
       - "4200:80"
+    depends_on:
+      - backend
