@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<suppressions>
-  <suppress>
-    <dependency>
-      <name>undici</name>
-      <version>6.19.7</version>
-    </dependency>
-    <cve>CVE-2025-22150</cve>
-    <notes>Dépendance transitive via Firebase, non corrigeable pour l'instant. Surveillance des mises à jour Firebase.</notes>
-  </suppress>
-</suppressions> 
+<suppress>
+  <dependency>
+    <name>undici</name>
+    <version>6.19.7</version>
+  </dependency>
+  <cve>CVE-2025-22150</cve>
+  <notes>Dépendance transitive via Firebase, non corrigeable pour l'instant. Surveillance des mises à jour Firebase.</notes>
+</suppress> 
