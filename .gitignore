@@ -5,6 +5,7 @@
 # Angular cache
 .angular/cache
 .angular/cache/**/*
+frontend/.angular/cache/
 
 # Environment files
 .env
