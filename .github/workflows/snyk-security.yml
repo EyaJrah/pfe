@@ -51,14 +51,26 @@ jobs:
       - name: Install Snyk
         run: npm install -g snyk
 
-      - name: Run  Snyk Scan on backend
-        run: snyk test --all-projects --detection-depth=4 --dev --severity-threshold=high
+      - name: Run Snyk Scan on backend
+        run: snyk test --all-projects --detection-depth=4 --dev --severity-threshold=high --json > snyk-backend-report.json
         working-directory: ./backend
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: Run  Snyk Scan on frontend
-        run: snyk test --all-projects --detection-depth=4 --dev --severity-threshold=high
+      - name: Upload Snyk Backend Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-backend-report
+          path: ./backend/snyk-backend-report.json
+
+      - name: Run Snyk Scan on frontend
+        run: snyk test --all-projects --detection-depth=4 --dev --severity-threshold=high --json > snyk-frontend-report.json
         working-directory: ./frontend
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }} 
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Upload Snyk Frontend Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-frontend-report
+          path: ./frontend/snyk-frontend-report.json 
