@@ -38,6 +38,9 @@ jobs:
         working-directory: ./backend
         run: npm test
 
+      - name: Install Snyk
+        run: npm install -g snyk
+
   snyk:
     name: Snyk Security Scan
     needs: test
