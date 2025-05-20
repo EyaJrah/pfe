@@ -1,0 +1,5 @@
+ignore:
+  SNYK-JS-UNDICI-8641354:
+    - '*':
+        reason: "Dépendance transitive via Firebase/AngularFire, non corrigeable pour l'instant. Surveillance des mises à jour."
+        expires: "2025-12-31T23:59:59Z" 
