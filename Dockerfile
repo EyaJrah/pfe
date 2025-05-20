@@ -11,7 +11,22 @@ FROM node:18
 WORKDIR /app
 COPY backend/package*.json ./
 RUN npm install
-COPY backend/ .
+COPY backend/ . .
+
+# Installer les outils nécessaires pour les scans
+RUN apt-get update && \
+    apt-get install -y git curl unzip && \
+    npm install -g snyk && \
+    curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin && \
+    npm install -g sonarqube-scanner && \
+    curl -sSLo /tmp/dc.zip https://github.com/jeremylong/DependencyCheck/releases/download/v9.1.1/dependency-check-9.1.1-release.zip && \
+    unzip /tmp/dc.zip -d /opt && \
+    mv /opt/dependency-check /opt/dependency-check-9.1.1 && \
+    ln -s /opt/dependency-check-9.1.1/bin/dependency-check.sh /usr/local/bin/dependency-check && \
+    rm /tmp/dc.zip
+
+# Rendre le script exécutable
+RUN chmod +x /app/scan-and-send.sh
 
 # Copie les fichiers Angular compilés
 COPY --from=frontend-build /app/dist/temp-app/browser/ ./public/

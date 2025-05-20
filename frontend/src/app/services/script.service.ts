@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -10,12 +10,12 @@ export class ScriptService {
   constructor(private http: HttpClient) {}
 
   runScript(repoUrl: string): Observable<any> {
-    console.log('Calling API at:', `${this.backendUrl}/scan-results/scan-all`);
-    return this.http.post<any>(`${this.backendUrl}/scan-results/scan-all`, { githubUrl: repoUrl });
+    const params = new HttpParams().set('repoUrl', repoUrl);
+    return this.http.get<any>(`${this.backendUrl}/run-script`, { params });
   }
 
   runScanAndSend(repoUrl: string): Observable<any> {
-    console.log('Calling API at:', `${this.backendUrl}/scan-results/scan-all`);
-    return this.http.post<any>(`${this.backendUrl}/scan-results/scan-all`, { githubUrl: repoUrl });
+    const params = new HttpParams().set('repoUrl', repoUrl);
+    return this.http.get<any>(`${this.backendUrl}/run-script`, { params });
   }
 } 

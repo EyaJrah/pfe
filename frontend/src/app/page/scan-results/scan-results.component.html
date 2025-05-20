@@ -31,21 +31,21 @@
 
   <div class="content">
     <div class="page-header">
-      <h1>Security Scan Results</h1>
+      <h1>Résultats de l'analyse de sécurité</h1>
       <p class="repo-url">Repository: {{ repositoryUrl }}</p>
     </div>
 
     <!-- Loading State -->
     <div *ngIf="loading" class="loading-spinner">
       <div class="spinner"></div>
-      <p>Analyzing repository...</p>
+      <p>Analyse du dépôt...</p>
     </div>
 
     <!-- Error Message -->
     <div *ngIf="error" class="error-message">
       {{ error }}
       <button *ngIf="repositoryUrl" (click)="retryScans()" class="retry-button">
-        Retry Scan
+        Réessayer l'analyse
       </button>
     </div>
 
