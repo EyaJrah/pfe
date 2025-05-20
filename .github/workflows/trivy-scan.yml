@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - scanresult
+      - checkmain
       
   pull_request:
     types: [opened, synchronize, reopened]
