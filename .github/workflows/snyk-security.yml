@@ -48,6 +48,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Snyk
+        run: npm install -g snyk
+
       - name: Run Snyk on backend
         run: snyk test --severity-threshold=high
         working-directory: ./backend
