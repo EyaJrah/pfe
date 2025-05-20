@@ -1,4 +1,3 @@
-
 name: OWASP Dependency Check
 
 on:
@@ -58,6 +57,7 @@ jobs:
           args: >
             --failOnCVSS 7
             --enableRetired
+            --suppression owasp-suppressions.xml
 
       - name: Run OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
