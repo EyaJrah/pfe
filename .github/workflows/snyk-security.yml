@@ -45,9 +45,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/node@master
+      - name: Run Snyk on backend
+        run: snyk test --severity-threshold=high
+        working-directory: ./backend
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high 
+
+      - name: Run Snyk on frontend
+        run: snyk test --severity-threshold=high
+        working-directory: ./frontend
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }} 
