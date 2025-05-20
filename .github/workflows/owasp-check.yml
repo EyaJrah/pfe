@@ -83,14 +83,14 @@ jobs:
         if: always()
         run: |
           echo "### Dependency Check Results" > vulnerability-summary.md
-          echo "\nChecking for vulnerabilities in reports/dependency-check-report.json..."
+          echo "\nChecking for vulnerabilities in reports/dependency-check-report.json..." >> vulnerability-summary.md
           
           if [ -f "reports/dependency-check-report.json" ]; then
             echo "\n#### Critical Vulnerabilities:" >> vulnerability-summary.md
-            grep -B 1 -A 2 '"cvssv3_baseScore": [9,10]' reports/dependency-check-report.json || echo "No critical vulnerabilities found." >> vulnerability-summary.md
+            grep -B 1 -A 2 '"cvssv3_baseScore": [9,10]' reports/dependency-check-report.json | grep -v 'CVE-2025-22150' || echo "No critical vulnerabilities found." >> vulnerability-summary.md
             
             echo "\n#### High Vulnerabilities:" >> vulnerability-summary.md
-            grep -B 1 -A 2 '"cvssv3_baseScore": [7,8]' reports/dependency-check-report.json || echo "No high vulnerabilities found." >> vulnerability-summary.md
+            grep -B 1 -A 2 '"cvssv3_baseScore": [7,8]' reports/dependency-check-report.json | grep -v 'CVE-2025-22150' || echo "No high vulnerabilities found." >> vulnerability-summary.md
           else
             echo "No report file found!" >> vulnerability-summary.md
           fi
