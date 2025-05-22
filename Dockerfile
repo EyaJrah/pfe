@@ -12,6 +12,9 @@ WORKDIR /app
 COPY backend/package*.json ./
 RUN npm install
 COPY backend/ . 
+COPY backend/scan-and-send.sh ./
+RUN chmod +x /app/scan-and-send.sh
+
 
 # Installer les outils nécessaires pour les scans
 RUN apt-get update && \
@@ -26,8 +29,8 @@ RUN apt-get update && \
     ln -s /opt/dependency-check-12.1.0/bin/dependency-check.sh /usr/local/bin/dependency-check && \
     rm /tmp/dc.zip
 
-# Rendre le script exécutable
-RUN chmod +x /app/scan-and-send.sh
+
+
 
 # Copie les fichiers Angular compilés
 COPY --from=frontend-build /app/dist/temp-app/browser/ ./public/
