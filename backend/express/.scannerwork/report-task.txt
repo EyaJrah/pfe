@@ -1,7 +1,7 @@
 organization=eyajrah
 projectKey=eyajrah_express
 serverUrl=https://sonarcloud.io
-serverVersion=8.0.0.63405
+serverVersion=8.0.0.63718
 dashboardUrl=https://sonarcloud.io/dashboard?id=eyajrah_express
-ceTaskId=AZbdcSC1Om5gVHSqCCCC
-ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZbdcSC1Om5gVHSqCCCC
+ceTaskId=AZb4aHFvE28dC9HVqDlz
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZb4aHFvE28dC9HVqDlz

@@ -35,7 +35,7 @@ if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir);
 }
 
-// CORS configuration
+// CORS configuration (permet les requêtes du frontend Angular sur http://localhost:4200)
 const corsOptions = {
   origin: ['http://localhost:4200', 'http://localhost:5000','http://localhost:10000', 'http://127.0.0.1:4200', 'http://127.0.0.1:10000', 'https://pfe-app-imrs.onrender.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -45,6 +45,7 @@ const corsOptions = {
   maxAge: 86400
 };
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Logging requests
 app.use((req, res, next) => {

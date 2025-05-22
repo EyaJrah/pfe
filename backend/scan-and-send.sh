@@ -183,10 +183,32 @@ get_other_tool_results() {
     fi
     (cd "$REPO_NAME" && snyk test --all-projects --org=0927db18-d20b-4277-819e-de3936cf32c8 --json > "$TEMP_DIR/snyk.json" && snyk monitor --all-projects --org=0927db18-d20b-4277-819e-de3936cf32c8)
     
-    # OWASP Dependency Check scan
+    # Créer un fichier de suppression XML valide
+    SUPPRESSION_FILE="$TEMP_DIR/suppressions.xml"
+    echo '<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+</suppressions>' > "$SUPPRESSION_FILE"
+
+    # Lancement de OWASP Dependency Check
     echo "Lancement de OWASP Dependency Check..."
-    mkdir -p "$TEMP_DIR/dc-report"
-    dependency-check --project "$REPO_NAME" --scan "$REPO_NAME" --format JSON --out "$TEMP_DIR/dc-report"
+    dependency-check --scan "$REPO_NAME" \
+                    --format JSON \
+                    --out "$TEMP_DIR/dc-report" \
+                    --suppression "$SUPPRESSION_FILE" \
+                    --failOnCVSS 0 \
+                    --enableRetired
+
+    # Vérifier si le rapport existe et est un JSON valide
+    if [ -f "$TEMP_DIR/dc-report/dependency-check-report.json" ]; then
+        # Vérifier si le fichier est un JSON valide
+        if ! jq empty "$TEMP_DIR/dc-report/dependency-check-report.json" 2>/dev/null; then
+            # Si le fichier n'est pas un JSON valide, créer un rapport vide
+            echo '{"dependencies":[]}' > "$TEMP_DIR/dc-report/dependency-check-report.json"
+        fi
+    else
+        # Le rapport n'existe pas, on le crée
+        echo '{"dependencies":[]}' > "$TEMP_DIR/dc-report/dependency-check-report.json"
+    fi
     
     # Vérifier que les fichiers de résultats existent
     [ -f "$TEMP_DIR/trivy.json" ] || echo '{}' > "$TEMP_DIR/trivy.json"
