@@ -18,7 +18,7 @@ RUN chmod +x /app/scan-and-send.sh
 
 # Installer les outils nécessaires pour les scans
 RUN apt-get update && \
-    apt-get install -y git curl unzip && \
+    apt-get install -y openjdk-17-jre git curl unzip && \
     npm install -g snyk && \
     curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin && \
     npm install -g sonarqube-scanner && \
@@ -28,10 +28,6 @@ RUN apt-get update && \
     mv /opt/dependency-check /opt/dependency-check-12.1.0 && \
     ln -s /opt/dependency-check-12.1.0/bin/dependency-check.sh /usr/local/bin/dependency-check && \
     rm /tmp/dc.zip
-
-
-
-
 # Copie les fichiers Angular compilés
 COPY --from=frontend-build /app/dist/temp-app/browser/ ./public/
 
