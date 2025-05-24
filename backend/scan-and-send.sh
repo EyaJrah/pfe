@@ -66,7 +66,7 @@ fi
 
 # Clone the repository
 REPO_URL=$1
-REPO_NAME=$(basename $REPO_URL .git)
+REPO_NAME=$(basename "$REPO_URL" .git)
 ORGANIZATION="eyajrah"
 
 # Charger les variables d'environnement depuis .env si présent
@@ -97,10 +97,10 @@ else
   SONAR_SOURCES="."
 fi
 
-# Nettoyage du dossier existant avant clonage
+# Suppression fiable du dossier existant
 if [ -d "$REPO_NAME" ]; then
   echo "Suppression du dossier existant $REPO_NAME"
-  rm -rf "$REPO_NAME"
+  npx rimraf "$REPO_NAME"
 fi
 
 echo "Répertoire courant: $(pwd)"
