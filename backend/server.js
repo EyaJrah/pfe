@@ -118,7 +118,12 @@ const handleScan = (req, res) => {
   const repoUrl = req.query.repoUrl;
   if (!repoUrl) return res.status(400).json({ error: 'repoUrl is required' });
   exec(`bash ${__dirname}/scan-and-send.sh "${repoUrl}"`, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      console.error('Erreur lors de l\'exécution du scan:', error);
+      console.error('STDOUT:', stdout);
+      console.error('STDERR:', stderr);
+      return res.status(500).json({ error: error.message, stdout, stderr });
+    }
 
     const logPathMatch = stdout.match(/LOG_FILE_PATH:(.*)/);
     if (!logPathMatch) return res.status(500).json({ error: 'Log file path not found', raw: stdout });
