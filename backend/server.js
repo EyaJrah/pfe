@@ -38,7 +38,8 @@ if (!fs.existsSync(tempDir)) {
 // Configuration CORS dynamique (dev uniquement)
 const allowedOrigins = [
   'http://localhost:4200',
-  'http://127.0.0.1:4200'
+  'http://127.0.0.1:4200',
+  'https://pfe-production-93c7.up.railway.app'
 ];
 
 app.use(cors({
