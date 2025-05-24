@@ -24,7 +24,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "http://localhost:10000","http://localhost:5000", "https://api.github.com", "https://sonarcloud.io", "https://pfe-app-imrs.onrender.com"]
+      connectSrc: ["'self'", "http://localhost:10000","http://localhost:5000", "https://api.github.com", "https://sonarcloud.io", "https://pfe-app-imrs.onrender.com","https://pfe-production-93c7.up.railway.app"]
     }
   }
 }));
@@ -35,22 +35,22 @@ if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir);
 }
 
-// CORS configuration (permet les requêtes du frontend Angular sur http://localhost:4200)
-const corsOptions = {
-  origin: ['http://localhost:4200', 'http://localhost:5000','http://localhost:10000', 'http://127.0.0.1:4200', 'http://127.0.0.1:10000', 'https://pfe-app-imrs.onrender.com'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  credentials: true,
-  maxAge: 86400
-};
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+// Configuration CORS dynamique (dev uniquement)
+const allowedOrigins = [
+  'http://localhost:4200',
+  'http://127.0.0.1:4200'
+];
 
-// Ajout de la configuration CORS pour Railway
 app.use(cors({
-  origin: 'https://pfe-production-93c7.up.railway.app',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 
