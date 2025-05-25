@@ -24,7 +24,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "http://localhost:10000","http://localhost:5000", "https://api.github.com", "https://sonarcloud.io", "https://pfe-app-imrs.onrender.com"]
+      connectSrc: ["'self'", "http://localhost:10000","http://localhost:5000", "https://api.github.com", "https://sonarcloud.io", "https://pfe-app-imrs.onrender.com","https://pfe-production-93c7.up.railway.app"]
     }
   }
 }));
@@ -35,16 +35,25 @@ if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir);
 }
 
-// CORS configuration
-const corsOptions = {
-  origin: ['http://localhost:4200', 'http://localhost:5000','http://localhost:10000', 'http://127.0.0.1:4200', 'http://127.0.0.1:10000', 'https://pfe-app-imrs.onrender.com'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  credentials: true,
-  maxAge: 86400
-};
-app.use(cors(corsOptions));
+// Configuration CORS dynamique (dev uniquement)
+const allowedOrigins = [
+  'http://localhost:4200',
+  'http://127.0.0.1:4200',
+  'https://pfe-production-93c7.up.railway.app'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
 // Logging requests
 app.use((req, res, next) => {
@@ -104,84 +113,11 @@ if (!fs.existsSync(publicPath)) {
 }
 app.use(express.static(publicPath));
 
-// Handle Angular routing
-app.get('*', (req, res) => {
-  const indexPath = path.join(__dirname, 'public/index.html');
-  console.log('Serving index.html for path:', req.path);
-  console.log('Index file path:', indexPath);
-  
-  // Vérifier si le fichier existe
-  if (!fs.existsSync(indexPath)) {
-    console.error('index.html not found at:', indexPath);
-    return res.status(404).send('Application not found');
-  }
-  
-  res.sendFile(indexPath);
-});
-
-// Helper functions
-const safeReadJson = (filePath) => {
-  try {
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      if (content.trim().length > 0) return JSON.parse(content);
-    }
-  } catch (_) {}
-  return null;
-};
-
-const extractJsonBlock = (text, marker) => {
-  const regex = new RegExp(`=== ${marker} ===\\s*([\\s\\S]*?)(?=^=== |$)`, 'm');
-  const match = text.match(regex);
-  if (match && match[1]) {
-    const jsonCandidate = match[1].trim();
-    try {
-      return JSON.parse(jsonCandidate);
-    } catch (_) {
-      const first = jsonCandidate.indexOf('{');
-      const last = jsonCandidate.lastIndexOf('}');
-      if (first !== -1 && last > first) {
-        try {
-          return JSON.parse(jsonCandidate.slice(first, last + 1));
-        } catch (_) {}
-      }
-    }
-  }
-  return null;
-};
-
-const limitVulns = (obj, path, max = 5) => {
-  if (!obj) return obj;
-  let ref = obj;
-  for (let i = 0; i < path.length - 1; i++) {
-    if (ref[path[i]]) {
-      ref = ref[path[i]];
-    } else {
-      return obj;
-    }
-  }
-  const lastKey = path[path.length - 1];
-  if (Array.isArray(ref[lastKey])) {
-    ref[lastKey] = ref[lastKey].slice(0, max);
-  }
-  return obj;
-};
-
-// Limiter à 2 vulnérabilités par outil et filtrer les champs essentiels
-function filterVulnFields(vulns) {
-  if (!Array.isArray(vulns)) return [];
-  return vulns.map(v => ({
-    id: v.id || v.VulnerabilityID || v.name || v.key || '',
-    title: v.title || v.rule || v.packageName || v.component || '',
-    severity: v.severity || v.Severity || '',
-    description: v.description || v.message || ''
-  }));
-}
-
+// Définition de la fonction handleScan
 const handleScan = (req, res) => {
   const repoUrl = req.query.repoUrl;
   if (!repoUrl) return res.status(400).json({ error: 'repoUrl is required' });
-  exec(`bash /home/thinkpad/Documents/pfe/scan-and-send.sh "${repoUrl}"`, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
+  exec(`bash ${__dirname}/scan-and-send.sh "${repoUrl}"`, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
     if (error) return res.status(500).json({ error: error.message });
 
     const logPathMatch = stdout.match(/LOG_FILE_PATH:(.*)/);
@@ -300,6 +236,80 @@ const handleScan = (req, res) => {
     });
   });
 };
+
+// Ajout de la route run-script juste avant le catch-all
+app.get('/api/run-script', handleScan);
+
+// Handle Angular routing (catch-all)
+app.get('*', (req, res) => {
+  const indexPath = path.join(__dirname, 'public/index.html');
+  console.log('Serving index.html for path:', req.path);
+  console.log('Index file path:', indexPath);
+  if (!fs.existsSync(indexPath)) {
+    console.error('index.html not found at:', indexPath);
+    return res.status(404).send('Application not found');
+  }
+  res.sendFile(indexPath);
+});
+
+// Helper functions
+const safeReadJson = (filePath) => {
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf8');
+      if (content.trim().length > 0) return JSON.parse(content);
+    }
+  } catch (_) {}
+  return null;
+};
+
+const extractJsonBlock = (text, marker) => {
+  const regex = new RegExp(`=== ${marker} ===\\s*([\\s\\S]*?)(?=^=== |$)`, 'm');
+  const match = text.match(regex);
+  if (match && match[1]) {
+    const jsonCandidate = match[1].trim();
+    try {
+      return JSON.parse(jsonCandidate);
+    } catch (_) {
+      const first = jsonCandidate.indexOf('{');
+      const last = jsonCandidate.lastIndexOf('}');
+      if (first !== -1 && last > first) {
+        try {
+          return JSON.parse(jsonCandidate.slice(first, last + 1));
+        } catch (_) {}
+      }
+    }
+  }
+  return null;
+};
+
+const limitVulns = (obj, path, max = 5) => {
+  if (!obj) return obj;
+  let ref = obj;
+  for (let i = 0; i < path.length - 1; i++) {
+    if (ref[path[i]]) {
+      ref = ref[path[i]];
+    } else {
+      return obj;
+    }
+  }
+  const lastKey = path[path.length - 1];
+  if (Array.isArray(ref[lastKey])) {
+    ref[lastKey] = ref[lastKey].slice(0, max);
+  }
+  return obj;
+};
+
+// Limiter à 2 vulnérabilités par outil et filtrer les champs essentiels
+function filterVulnFields(vulns) {
+  if (!Array.isArray(vulns)) return [];
+  return vulns.map(v => ({
+    id: v.id || v.VulnerabilityID || v.name || v.key || '',
+    title: v.title || v.rule || v.packageName || v.component || '',
+    severity: v.severity || v.Severity || '',
+    description: v.description || v.message || ''
+  }));
+}
 
 app.get('/api/run-script', handleScan);
 app.get('/api/scan-and-send', handleScan);
