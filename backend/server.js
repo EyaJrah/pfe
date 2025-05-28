@@ -15,7 +15,7 @@ dotenv.config();
 const app = express();
 console.log('🚀 NODE_ENV:', process.env.NODE_ENV);
 if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', true);
+  app.set('trust proxy', 1);
 }
 const PORT = process.env.PORT || 10000||5000 ;
 // Apply Helmet middleware
