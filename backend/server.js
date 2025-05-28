@@ -13,6 +13,7 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
+console.log('🚀 NODE_ENV:', process.env.NODE_ENV);
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', true);
 }
@@ -127,7 +128,7 @@ if (!fs.existsSync(publicPath)) {
 app.use(express.static(publicPath));
 
 // Définition de la fonction handleScan
-const handleScan = (req, res) => {
+ const handleScan = (req, res) => {
   const repoUrl = req.query.repoUrl;
   if (!repoUrl) return res.status(400).json({ error: 'repoUrl is required' });
   exec(`bash ${__dirname}/scan-and-send.sh "${repoUrl}"`, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
@@ -248,48 +249,37 @@ const handleScan = (req, res) => {
       });
     });
   });
-};
+}; 
 
-/*const handleScan = (req, res) => {
-  console.log('=== SCRIPT EXECUTION START ===');
+/* const handleScan = (req, res) => {
   const repoUrl = req.query.repoUrl;
-  console.log('Repository URL:', repoUrl);
  
   if (!repoUrl) {
-    console.log('ERROR: repoUrl is required');
     return res.status(400).json({ error: 'repoUrl is required' });
   }
  
   // Check if script exists
   const scriptPath = `${__dirname}/scan-and-send.sh`;
-  console.log('Script path:', scriptPath);
-  console.log('Script exists:', fs.existsSync(scriptPath));
+
  
   const command = `bash ${scriptPath} "${repoUrl}"`;
-  console.log('Executing command:', command);
  
   exec(command, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
-    console.log('=== SCRIPT OUTPUT ===');
-    console.log('STDOUT:', stdout);
-    console.log('STDERR:', stderr);
+    
    
     if (error) {
-      console.log('EXECUTION ERROR:', error);
       return res.status(500).json({ error: error.message });
     }
 
     const logPathMatch = stdout.match(/LOG_FILE_PATH:(.*)/);
     if (!logPathMatch) {
-      console.log('ERROR: Log file path not found in stdout');
       return res.status(500).json({ error: 'Log file path not found', raw: stdout });
     }
 
     const logFilePath = logPathMatch[1].trim();
-    console.log('Reading log file:', logFilePath);
    
     fs.readFile(logFilePath, 'utf8', (err, logContent) => {
       if (err) {
-        console.log('ERROR: Failed to read log file:', err);
         return res.status(500).json({ error: 'Failed to read log', details: err.message });
       }
 
@@ -303,11 +293,9 @@ const handleScan = (req, res) => {
         }
       }
       if (!tempDir) {
-        console.log('ERROR: Temp dir not found');
         return res.status(500).json({ error: 'Temp dir not found', raw: logContent });
       }
 
-      console.log('Using temp directory:', tempDir);
 
       const sonarcloud = safeReadJson(`${tempDir}/sonar_results.json`) || extractJsonBlock(stdout, 'Résultat SonarCloud');
       const trivy = safeReadJson(`${tempDir}/trivy.json`) || extractJsonBlock(stdout, 'Résultat Trivy');
@@ -322,18 +310,14 @@ const handleScan = (req, res) => {
       // DEBUG: Log du contenu brut des fichiers Trivy et Snyk
       try {
         const trivyRaw = fs.readFileSync(`${tempDir}/trivy.json`, 'utf8');
-        console.log('TRIVY RAW JSON:', trivyRaw);
       } catch (e) { console.log('TRIVY RAW JSON: ERREUR LECTURE'); }
       try {
         const snykRaw = fs.readFileSync(`${tempDir}/snyk.json`, 'utf8');
-        console.log('SNYK RAW JSON:', snykRaw);
       } catch (e) { console.log('SNYK RAW JSON: ERREUR LECTURE'); }
 
-      // Continue with the rest of your function...
-      console.log('=== SCRIPT EXECUTION COMPLETE ===');
     });
   });
-};*/
+};  */
 // Ajout de la route run-script juste avant le catch-all
 app.get('/api/run-script', handleScan);
 
