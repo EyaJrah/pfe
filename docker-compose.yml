@@ -1,0 +1,8 @@
+version: '3'
+services:
+  app:
+    image: eyajrah/pfe-app:latest
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_URI=mongodb+srv://eyajrah6:admin123@cluster0.qmxbacx.mongodb.net/pfe?retryWrites=true&w=majority 

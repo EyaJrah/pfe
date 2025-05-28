@@ -18,7 +18,7 @@ RUN chmod +x /app/scan-and-send.sh
 
 # Installer les outils nécessaires pour les scans
 RUN apt-get update && \
-    apt-get install -y openjdk-17-jre git curl unzip && \
+    apt-get install -y openjdk-17-jre git curl unzip jq && \
     npm install -g snyk && \
     curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin && \
     npm install -g sonarqube-scanner && \
