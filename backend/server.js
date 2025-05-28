@@ -13,7 +13,9 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
-app.set('trust proxy', true);
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', true);
+}
 const PORT = process.env.PORT || 10000||5000 ;
 // Apply Helmet middleware
 app.use(helmet({
@@ -125,7 +127,7 @@ if (!fs.existsSync(publicPath)) {
 app.use(express.static(publicPath));
 
 // Définition de la fonction handleScan
-/*const handleScan = (req, res) => {
+const handleScan = (req, res) => {
   const repoUrl = req.query.repoUrl;
   if (!repoUrl) return res.status(400).json({ error: 'repoUrl is required' });
   exec(`bash ${__dirname}/scan-and-send.sh "${repoUrl}"`, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
@@ -246,9 +248,9 @@ app.use(express.static(publicPath));
       });
     });
   });
-};*/
+};
 
-const handleScan = (req, res) => {
+/*const handleScan = (req, res) => {
   console.log('=== SCRIPT EXECUTION START ===');
   const repoUrl = req.query.repoUrl;
   console.log('Repository URL:', repoUrl);
@@ -331,7 +333,7 @@ const handleScan = (req, res) => {
       console.log('=== SCRIPT EXECUTION COMPLETE ===');
     });
   });
-};
+};*/
 // Ajout de la route run-script juste avant le catch-all
 app.get('/api/run-script', handleScan);
 
