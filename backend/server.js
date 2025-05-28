@@ -13,8 +13,8 @@ dotenv.config();
 
 // Initialize Express app
 const app = express();
+app.set('trust proxy', true);
 const PORT = process.env.PORT || 10000||5000 ;
-
 // Apply Helmet middleware
 app.use(helmet({
   contentSecurityPolicy: {
