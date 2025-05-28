@@ -39,21 +39,32 @@ if (!fs.existsSync(tempDir)) {
 const allowedOrigins = [
   'http://localhost:4200',
   'http://127.0.0.1:4200',
+  'http://localhost:5000',
+  'http://localhost:5001',
   'https://pfe-production-93c7.up.railway.app'
 ];
 
+// Log pour le débogage CORS
+app.use((req, res, next) => {
+  console.log('Request Headers:', req.headers);
+  console.log('Request Origin:', req.headers.origin);
+  next();
+});
+
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  origin: true, // Permet toutes les origines en développement
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  credentials: true,
+  maxAge: 86400 // 24 heures
 }));
+
+// Ajout d'un middleware pour logger les erreurs
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: err.message });
+});
 
 // Logging requests
 app.use((req, res, next) => {

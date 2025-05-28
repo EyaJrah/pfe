@@ -5,7 +5,7 @@ const { execFile } = require('child_process');
 const ScanResult = require('../models/ScanResult');
 const fs = require('fs');
 const path = require('path');
-const scriptPath = path.join(__dirname, '..', 'scripts', 'scan-and-send.sh');
+const scriptPath = path.join(__dirname, '..', 'scan-and-send.sh');
 
 // POST /api/scan-results/scan-all
 router.post('/scan-all', authenticateToken, async (req, res) => {
