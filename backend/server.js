@@ -128,7 +128,156 @@ if (!fs.existsSync(publicPath)) {
 app.use(express.static(publicPath));
 
 // Définition de la fonction handleScan
- const handleScan = (req, res) => {
+
+
+const handleScan = (req, res) => {
+  const repoUrl = req.query.repoUrl;
+  if (!repoUrl) return res.status(400).json({ error: 'repoUrl is required' });
+
+  const scriptPath = path.join(__dirname, 'scan-and-send.sh');
+
+  // Vérification si le script existe
+  if (!fs.existsSync(scriptPath)) {
+    console.error('❌ Script introuvable à :', scriptPath);
+    return res.status(500).json({ error: 'Script scan-and-send.sh introuvable sur le serveur' });
+  }
+
+  // Exécution du script
+  console.log('✅ Exécution du script avec repo :', repoUrl);
+  exec(`bash "${scriptPath}" "${repoUrl}"`, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
+    if (stderr) console.warn('⚠️ STDERR:', stderr);
+
+    if (error) {
+      console.error('❌ Erreur d’exécution :', error.message);
+      return res.status(500).json({ error: 'Erreur script', message: error.message, stderr });
+    }
+
+    if (!stdout || typeof stdout !== 'string') {
+      console.error('❌ Sortie vide ou invalide du script');
+      return res.status(500).json({ error: 'Sortie vide ou invalide du script' });
+    }
+
+    const logPathMatch = stdout.match(/LOG_FILE_PATH:(.*)/);
+    if (!logPathMatch) {
+      console.error('❌ LOG_FILE_PATH non trouvé dans stdout');
+      return res.status(500).json({ error: 'Chemin du fichier log introuvable', raw: stdout });
+    }
+
+    const logFilePath = logPathMatch[1].trim();
+
+    fs.readFile(logFilePath, 'utf8', (err, logContent) => {
+      if (err) {
+        console.error('❌ Lecture du fichier log échouée :', err.message);
+        return res.status(500).json({ error: 'Erreur lecture fichier log', details: err.message });
+      }
+
+      // Extraction du dossier temporaire
+      const tempDirMatch = logContent.match(/TEMP_DIR:(\/tmp\/tmp[^\s]+)/);
+      let tempDir = tempDirMatch ? tempDirMatch[1] : null;
+
+      if (!tempDir) {
+        const tmpDirs = fs.readdirSync('/tmp').filter(f => f.startsWith('tmp'));
+        if (tmpDirs.length > 0) {
+          tempDir = '/tmp/' + tmpDirs.sort((a, b) => fs.statSync('/tmp/' + b).ctimeMs - fs.statSync('/tmp/' + a).ctimeMs)[0];
+        }
+      }
+
+      if (!tempDir) {
+        console.error('❌ Répertoire temporaire introuvable');
+        return res.status(500).json({ error: 'Répertoire temporaire non trouvé', raw: logContent });
+      }
+
+      const sonarcloud = safeReadJson(`${tempDir}/sonar_results.json`) || extractJsonBlock(stdout, 'Résultat SonarCloud');
+      const trivy = safeReadJson(`${tempDir}/trivy.json`) || extractJsonBlock(stdout, 'Résultat Trivy');
+      const snyk = safeReadJson(`${tempDir}/snyk.json`) || extractJsonBlock(stdout, 'Résultat Snyk');
+      const owasp = safeReadJson(`${tempDir}/dc-report/dependency-check-report.json`) || extractJsonBlock(stdout, 'Résultat OWASP Dependency Check');
+
+      limitVulns(sonarcloud, ['sonarcloud_vulnerabilities', 'issues'], 2);
+      limitVulns(snyk, ['vulnerabilities'], 2);
+      if (trivy?.Results) trivy.Results = trivy.Results.map(r => ({ ...r, Vulnerabilities: filterVulnFields((r.Vulnerabilities || []).slice(0, 2)) }));
+      if (owasp?.dependencies) owasp.dependencies = owasp.dependencies.map(dep => ({ ...dep, vulnerabilities: filterVulnFields((dep.vulnerabilities || []).slice(0, 2)) }));
+
+      // DEBUG lecture brute
+      try {
+        const trivyRaw = fs.readFileSync(`${tempDir}/trivy.json`, 'utf8');
+        console.log('🟢 TRIVY RAW:', trivyRaw.slice(0, 1000));
+      } catch (e) { console.log('🔴 Lecture Trivy échouée'); }
+
+      try {
+        const snykRaw = fs.readFileSync(`${tempDir}/snyk.json`, 'utf8');
+        console.log('🟢 SNYK RAW:', snykRaw.slice(0, 1000));
+      } catch (e) { console.log('🔴 Lecture Snyk échouée'); }
+
+      // Mapping générique
+      const mapSonarVuln = issue => ({
+        id: issue.key || '',
+        title: issue.rule || '',
+        severity: issue.severity || '',
+        description: issue.message || ''
+      });
+
+      const mapTrivyVuln = v => ({
+        id: v.VulnerabilityID || v.id || '',
+        title: v.Title || v.title || '',
+        severity: v.Severity || v.severity || '',
+        description: v.Description || v.description || ''
+      });
+
+      const mapSnykVuln = v => ({
+        id: v.id || v.name || '',
+        title: v.title || v.packageName || '',
+        severity: v.severity || v.Severity || '',
+        description: v.description || v.message || ''
+      });
+
+      const sonarVulns = sonarcloud?.sonarcloud_vulnerabilities?.issues?.slice(0, 2).map(mapSonarVuln) || [];
+
+      const trivyVulns = [];
+      if (trivy?.Results) {
+        trivy.Results.forEach(r => {
+          if (Array.isArray(r.Vulnerabilities)) {
+            trivyVulns.push(...r.Vulnerabilities.slice(0, 2).map(mapTrivyVuln));
+          }
+        });
+      }
+
+      let snykVulns = [];
+      if (Array.isArray(snyk)) {
+        snyk.forEach(project => {
+          if (project.vulnerabilities?.length) {
+            snykVulns.push(...project.vulnerabilities.slice(0, 2).map(mapSnykVuln));
+          }
+        });
+      } else if (snyk?.vulnerabilities?.length) {
+        snykVulns = snyk.vulnerabilities.slice(0, 2).map(mapSnykVuln);
+      }
+
+      const owaspVulns = [];
+      if (owasp?.dependencies) {
+        owasp.dependencies.forEach(dep => {
+          if (Array.isArray(dep.vulnerabilities)) {
+            owaspVulns.push(...dep.vulnerabilities.slice(0, 2).map(mapSnykVuln));
+          }
+        });
+      }
+
+      console.log('✅ API FINAL RESPONSE');
+      res.json({
+        sonarcloud,
+        sonarcloudVulns: sonarVulns,
+        sonarcloudMetrics: sonarcloud?.sonarcloud_metrics || {},
+        trivy,
+        trivyVulns,
+        snyk,
+        snykVulns,
+        owasp,
+        owaspVulns
+      });
+    });
+  });
+};
+
+ /*const handleScan = (req, res) => {
   const repoUrl = req.query.repoUrl;
   if (!repoUrl) return res.status(400).json({ error: 'repoUrl is required' });
   exec(`bash ${__dirname}/scan-and-send.sh "${repoUrl}"`, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
@@ -318,9 +467,6 @@ app.use(express.static(publicPath));
     });
   });
 };  */
-
-
-
 
 // Ajout de la route run-script juste avant le catch-all
 app.get('/api/run-script', handleScan);
