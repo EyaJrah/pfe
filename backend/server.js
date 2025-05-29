@@ -318,6 +318,10 @@ app.use(express.static(publicPath));
     });
   });
 };  */
+
+
+
+
 // Ajout de la route run-script juste avant le catch-all
 app.get('/api/run-script', handleScan);
 
