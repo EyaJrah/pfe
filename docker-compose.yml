@@ -5,4 +5,11 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - MONGODB_URI=mongodb+srv://eyajrah6:admin123@cluster0.qmxbacx.mongodb.net/pfe?retryWrites=true&w=majority 
+      - MONGODB_URI=mongodb+srv://eyajrah6:admin123@cluster0.qmxbacx.mongodb.net/pfe?retryWrites=true&w=majority
+      - SONAR_TOKEN=966a443fef12e0a5693a67534749669c8c7e994a
+      - SONAR_ORGANIZATION=eyajrah
+      - SNYK_TOKEN=614402cf-f16c-42d8-a704-b87794f02d8f
+      - OWASP_DEPENDENCY_CHECK_PATH=/home/thinkpad/tools/owasp-dependency-check/dependency-check/bin/dependency-check.sh
+      - NVD_API_KEY=d49ba8b5-40fc-427b-be47-7a695b1bb480
+    env_file:
+      - ./backend/.env

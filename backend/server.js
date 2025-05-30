@@ -128,8 +128,6 @@ if (!fs.existsSync(publicPath)) {
 app.use(express.static(publicPath));
 
 // Définition de la fonction handleScan
-
-
 const handleScan = (req, res) => {
   const repoUrl = req.query.repoUrl;
   if (!repoUrl) return res.status(400).json({ error: 'repoUrl is required' });
@@ -142,9 +140,28 @@ const handleScan = (req, res) => {
     return res.status(500).json({ error: 'Script scan-and-send.sh introuvable sur le serveur' });
   }
 
+  // Set up environment with proper PATH
+  const env = {
+    ...process.env,
+    PATH: [
+      '/usr/local/bin',
+      '/usr/local/sbin',
+      '/usr/bin',
+      '/usr/sbin',
+      '/bin',
+      '/sbin',
+      '/root/.local/bin',
+      process.env.PATH
+    ].join(':')
+  };
+
   // Exécution du script
   console.log('✅ Exécution du script avec repo :', repoUrl);
-  exec(`bash "${scriptPath}" "${repoUrl}"`, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
+  exec(`bash "${scriptPath}" "${repoUrl}"`, { 
+    maxBuffer: 1024 * 1024 * 50,
+    env: env,
+    timeout: 0 // No timeout
+  }, (error, stdout, stderr) => {
     if (stderr) console.warn('⚠️ STDERR:', stderr);
 
     if (error) {
@@ -547,4 +564,3 @@ app.get('/api/scan-and-send', handleScan);
 
 // Start server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
