@@ -15,7 +15,6 @@ if [ -z "$REPO_PATH" ] || [ -z "$PROJECT_KEY" ] || [ -z "$SONAR_SOURCES" ]; then
 fi
 
 cd "$REPO_PATH" || exit 1
-
 # Installe sonar-scanner si besoin (npm global ou local)
 if ! command -v sonar-scanner &> /dev/null; then
   if [ -f "node_modules/.bin/sonar-scanner" ]; then
@@ -27,6 +26,12 @@ if ! command -v sonar-scanner &> /dev/null; then
 else
   SCANNER="sonar-scanner"
 fi
+
+# Configurer Java 21
+export JAVA_HOME="/usr/local/openjdk-21"
+export PATH="${JAVA_HOME}/bin:${PATH}"
+
+
 
 $SCANNER \
   -Dsonar.projectKey="$PROJECT_KEY" \

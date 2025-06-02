@@ -6,6 +6,7 @@ LOG_FILE="/tmp/resultats-complets-$(date +%s)-$$.log"
 # Rediriger toute la sortie (stdout et stderr) vers le fichier log
 exec > >(tee -a "$LOG_FILE") 2>&1
 
+
 TEMP_DIR=$(mktemp -d)
 echo "TEMP_DIR:$TEMP_DIR"
 
@@ -21,7 +22,9 @@ handle_snyk_auth() {
     if [ -n "$SNYK_TOKEN" ]; then
         snyk config set api=$SNYK_TOKEN
     fi
-    if ! snyk auth check &> /dev/null; then
+    if ! snyk auth $SNYK_TOKEN &> /dev/null; then
+        echo "SNYK_TOKEN:$SNYK_TOKEN"
+        echo "Erreur: Snyk n'est pas authentifié"
         exit 1
     fi
 }
@@ -36,6 +39,7 @@ check_prerequisites() {
         exit 1
     fi
     
+  
     # Vérifier Snyk
     if ! command -v snyk &> /dev/null; then
         echo "Erreur: Snyk n'est pas installé"
@@ -123,6 +127,7 @@ sonar.projectKey=eyajrah_${REPO_NAME}
 sonar.organization=eyajrah
 sonar.host.url=https://sonarcloud.io
 sonar.sources=.
+sonar.sourceEncoding=UTF-8
 EOF
 fi
 
@@ -131,11 +136,17 @@ SONAR_SCRIPT_PATH="$(dirname "$0")/setup-sonar.sh"
 if [ -f "$REPO_NAME/sonar-project.properties" ]; then
   if [ -f "$SONAR_SCRIPT_PATH" ]; then
     echo "[DEBUG] Lancement setup-sonar.sh" >&2
+    # Forcer l'utilisation de Java 21 pour SonarScanner
+    export JAVA_HOME="/usr/local/openjdk-21"
+    export PATH="${JAVA_HOME}/bin:${PATH}"
     "$SONAR_SCRIPT_PATH" "$REPO_NAME" "$PROJECT_KEY" "$SONAR_SOURCES"
     SONAR_SCAN_STATUS=$?
     echo "[DEBUG] setup-sonar.sh terminé avec code $SONAR_SCAN_STATUS" >&2
   else
     echo "[INFO] Lancement de l'analyse SonarCloud (sonar-scanner direct)..."
+    # Forcer l'utilisation de Java 21 pour SonarScanner
+    export JAVA_HOME="/usr/local/openjdk-21"
+    export PATH="${JAVA_HOME}/bin:${PATH}"
     (cd "$REPO_NAME" && sonar-scanner -Dsonar.projectKey="$PROJECT_KEY" -Dsonar.organization="$ORGANIZATION" -Dsonar.sources="$SONAR_SOURCES" -Dsonar.login="$SONAR_TOKEN")
     SONAR_SCAN_STATUS=$?
     sleep 10
