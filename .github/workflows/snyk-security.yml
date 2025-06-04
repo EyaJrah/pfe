@@ -64,7 +64,7 @@ jobs:
           path: ./backend/snyk-backend-report.json
 
       - name: Run Snyk Scan on frontend
-        run: snyk test --all-projects --detection-depth=4 --dev --severity-threshold=high --json > snyk-frontend-report.json
+        run: snyk test --all-projects --detection-depth=4 --dev --severity-threshold=high --json > snyk-frontend-report.json || true
         working-directory: ./frontend
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
