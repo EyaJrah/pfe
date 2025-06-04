@@ -54,11 +54,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './backend/package-lock.json'
 
-      - name: Install dependencies
+      - name: Install Backend Dependencies
         working-directory: ./backend
         run: npm install
 
-      - name: Generate sonar-project.properties
+      - name: Generate Backend sonar-project.properties
         working-directory: ./backend
         run: |
           echo "sonar.projectKey=eyajrah_backend" > sonar-project.properties
@@ -70,7 +70,7 @@ jobs:
           echo "sonar.test.inclusions=**/*.spec.ts,**/*.test.ts" >> sonar-project.properties
           echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties
 
-      - name: Create SonarCloud project if not exists (auto)
+      - name: Create Backend SonarCloud project if not exists
         working-directory: ./backend
         run: |
           set -x
@@ -91,10 +91,63 @@ jobs:
             echo "Project already exists."
           fi
 
-      - name: SonarCloud Scan
+      - name: Backend SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
           projectBaseDir: backend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+
+      - name: Setup Node.js for Frontend
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Generate Frontend sonar-project.properties
+        working-directory: ./frontend
+        run: |
+          echo "sonar.projectKey=eyajrah_frontend" > sonar-project.properties
+          echo "sonar.organization=eyajrah" >> sonar-project.properties
+          echo "sonar.projectName=frontend" >> sonar-project.properties
+          echo "sonar.projectVersion=1.0" >> sonar-project.properties
+          echo "sonar.sources=." >> sonar-project.properties
+          echo "sonar.exclusions=**/node_modules/**,**/*.spec.ts,**/*.test.ts" >> sonar-project.properties
+          echo "sonar.test.inclusions=**/*.spec.ts,**/*.test.ts" >> sonar-project.properties
+          echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties
+
+      - name: Create Frontend SonarCloud project if not exists
+        working-directory: ./frontend
+        run: |
+          set -x
+          PROJECT_KEY=$(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          ORG_KEY=$(grep '^sonar.organization=' sonar-project.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          PROJECT_NAME=$(grep '^sonar.projectName=' sonar-project.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          set +e
+          EXISTS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "https://sonarcloud.io/api/projects/search?projects=$PROJECT_KEY" | grep -c "\"key\":\"$PROJECT_KEY\"")
+          set -e
+          if [ "$EXISTS" -eq 0 ]; then
+            echo "Project does not exist, creating..."
+            curl -X POST "https://sonarcloud.io/api/projects/create" \
+              -u "${{ secrets.SONAR_TOKEN }}:" \
+              -d "name=$PROJECT_NAME" \
+              -d "project=$PROJECT_KEY" \
+              -d "organization=$ORG_KEY"
+          else
+            echo "Project already exists."
+          fi
+
+      - name: Frontend SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        with:
+          projectBaseDir: frontend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
