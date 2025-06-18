@@ -47,3 +47,6 @@ Thumbs.db
 *.tmp
 *.temp
 backend/SSRF_Vulnerable_Lab/ backend/juice-shop/ backend/terragoat/ node_modules/ .env
+backend/juice-shop/
+backend/node-express-realworld-example-app/
+backend/pfe/
